@@ -210,10 +210,6 @@ function inputToString(input: Buffer | string): string {
   }
 }
 
-function splitTextToken(value: string): string[] {
-  return value.match(/\r\n|[\r\n]|[^\r\n]+/g) ?? []
-}
-
 export function parseMultipleKeypresses(
   prevState: KeyParseState,
   input: Buffer | string | null = '',
@@ -282,9 +278,7 @@ export function parseMultipleKeypresses(
         const mouse = parseMouseEvent(resynthesized)
         keys.push(mouse ?? parseKeypress(resynthesized))
       } else {
-        for (const chunk of splitTextToken(token.value)) {
-          keys.push(parseKeypress(chunk))
-        }
+        keys.push(parseKeypress(token.value))
       }
     }
   }
@@ -704,9 +698,11 @@ function parseKeypress(s: string = ''): ParsedKey {
     return createNavKey(s, 'mouse', false)
   }
 
-  if (s === '\r' || s === '\n' || s === '\r\n') {
+  if (s === '\r') {
     key.raw = undefined
     key.name = 'return'
+  } else if (s === '\n') {
+    key.name = 'enter'
   } else if (s === '\t') {
     key.name = 'tab'
   } else if (s === '\b' || s === '\x1b\b') {
