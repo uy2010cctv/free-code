@@ -1,0 +1,14 @@
+{
+  "id": "f1ec84e1-1351-4dbf-8796-36785e50b7b2",
+  "title": "New Session",
+  "createdAt": 1775616649158,
+  "lastActivityAt": 1775616649169,
+  "messages": [
+    {
+      "id": "20964684-d049-49d4-b13a-ee85b9b28429",
+      "role": "user",
+      "content": "Run ls to list files",
+      "timestamp": 1775616649169
+    }
+  ]
+}

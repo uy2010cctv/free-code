@@ -1,13 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 
 interface PromptInputProps {
   value: string
   onChange: (value: string) => void
   onSubmit: (value: string) => void
   disabled?: boolean
+  isLoading?: boolean
+  onCancel?: () => void
 }
 
-export function PromptInput({ value, onChange, onSubmit, disabled }: PromptInputProps) {
+export function PromptInput({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+  isLoading = false,
+  onCancel,
+}: PromptInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -18,18 +27,22 @@ export function PromptInput({ value, onChange, onSubmit, disabled }: PromptInput
   }, [value])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey) {
       e.preventDefault()
-      if (value.trim()) {
+      if (value.trim() && !disabled && !isLoading) {
         onSubmit(value)
       }
     }
   }
 
   function handleSubmit() {
-    if (value.trim() && !disabled) {
+    if (value.trim() && !disabled && !isLoading) {
       onSubmit(value)
     }
+  }
+
+  function handleCancel() {
+    onCancel?.()
   }
 
   return (
@@ -41,22 +54,38 @@ export function PromptInput({ value, onChange, onSubmit, disabled }: PromptInput
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={disabled ? 'Select or create a session to start...' : 'Type a message (Enter to send, Shift+Enter for new line)'}
-          disabled={disabled}
+          placeholder={
+            disabled
+              ? 'Select or create a session to start...'
+              : isLoading
+                ? 'Processing...'
+                : 'Type a message (Enter to send, Shift+Enter for new line)'
+          }
+          disabled={disabled || isLoading}
           rows={1}
         />
-        <button
-          className="prompt-submit-btn"
-          onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-        >
-          Send
-        </button>
+        {isLoading ? (
+          <button
+            className="prompt-cancel-btn"
+            onClick={handleCancel}
+          >
+            Stop
+          </button>
+        ) : (
+          <button
+            className="prompt-submit-btn"
+            onClick={handleSubmit}
+            disabled={disabled || !value.trim()}
+          >
+            Send
+          </button>
+        )}
       </div>
-      <div className="mt-2 text-xs text-term-muted text-center">
-        <span className="mx-2">Ctrl+R: History</span>
-        <span className="mx-2">Ctrl+C: Cancel</span>
-        <span className="mx-2">Tab: Autocomplete</span>
+      <div className="prompt-shortcuts">
+        <span className="shortcut"><kbd>Enter</kbd> Send</span>
+        <span className="shortcut"><kbd>Shift</kbd>+<kbd>Enter</kbd> New line</span>
+        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>C</kbd> Cancel</span>
+        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>R</kbd> History</span>
       </div>
     </div>
   )

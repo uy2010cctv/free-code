@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { SessionSidebar } from './components/SessionSidebar'
 import { MessageList } from './components/MessageList'
 import { PromptInput } from './components/PromptInput'
+import { CommandToolbar } from './components/CommandToolbar'
+import { CommandPalette } from './components/CommandPalette'
+import { SettingsManager } from './components/SettingsManager'
 import { useWebKeybindings } from './hooks/useWebKeybindings'
-import type { Session, Message } from './types'
+import type { Session, Message, StreamEvent } from './types'
 
 export function AppWeb() {
   const [sessions, setSessions] = useState<Session[]>([])
@@ -11,8 +14,35 @@ export function AppWeb() {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
-  useWebKeybindings()
+  const handleCancelRequest = useCallback(() => {
+    if (!isLoading || !activeSessionId) return
+    fetch(`/api/sessions/${activeSessionId}/query`, { method: 'DELETE' }).catch(console.error)
+  }, [isLoading, activeSessionId])
+
+  const handleOpenCommandPalette = useCallback(() => {
+    setIsCommandPaletteOpen(true)
+  }, [])
+
+  const handleOpenSettings = useCallback(() => {
+    setIsSettingsOpen(true)
+  }, [])
+
+  const handleCloseCommandPalette = useCallback(() => {
+    setIsCommandPaletteOpen(false)
+  }, [])
+
+  const handleCloseSettings = useCallback(() => {
+    setIsSettingsOpen(false)
+  }, [])
+
+  useWebKeybindings({
+    onCancel: handleCancelRequest,
+    onCommandPalette: handleOpenCommandPalette,
+  })
 
   useEffect(() => {
     loadSessions()
@@ -44,7 +74,12 @@ export function AppWeb() {
       const res = await fetch(`/api/sessions/${sessionId}/messages`)
       if (res.ok) {
         const data = await res.json()
-        setMessages(data)
+        // Convert role to type for frontend compatibility
+        const converted = data.map((msg: any) => ({
+          ...msg,
+          type: msg.role || msg.type || 'assistant',
+        }))
+        setMessages(converted)
       }
     } catch (err) {
       console.error('Failed to load messages:', err)
@@ -59,6 +94,7 @@ export function AppWeb() {
         setSessions(prev => [...prev, session])
         setActiveSessionId(session.id)
         setMessages([])
+        setError(null)
       }
     } catch (err) {
       console.error('Failed to create session:', err)
@@ -81,11 +117,36 @@ export function AppWeb() {
     }
   }
 
+  function handleExecuteCommand(command: string) {
+    if (command.startsWith('/')) {
+      // Handle slash commands
+      const cmd = command.slice(1).split(' ')[0]
+      if (cmd === 'clear') {
+        setMessages([])
+      } else if (cmd === 'plan') {
+        handleSubmitQuery('Please create a plan for the current task.')
+      } else if (cmd === 'compact') {
+        handleSubmitQuery('Please compact the conversation context.')
+      } else if (cmd === 'undo') {
+        handleSubmitQuery('Please undo the last change.')
+      } else if (cmd === 'diff') {
+        handleSubmitQuery('Please show the uncommitted changes.')
+      } else if (cmd === 'status') {
+        handleSubmitQuery('Please show the current status.')
+      } else {
+        handleSubmitQuery(`/${cmd}`)
+      }
+    } else {
+      handleSubmitQuery(command)
+    }
+  }
+
   async function handleSubmitQuery(query: string) {
     if (!activeSessionId || !query.trim() || isLoading) return
 
     setIsLoading(true)
     setInputValue('')
+    setError(null)
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -118,37 +179,83 @@ export function AppWeb() {
           for (const line of lines) {
             if (line.startsWith('data: ')) {
               try {
-                const event = JSON.parse(line.slice(6))
+                const event = JSON.parse(line.slice(6)) as StreamEvent
                 handleStreamEvent(event)
-              } catch {}
+              } catch (e) {
+                // Ignore parse errors for partial data
+              }
             }
           }
         }
+      } else {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        setError(errorData.error || 'Request failed')
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Query failed:', err)
+      setError(err.message || 'Request failed')
     } finally {
       setIsLoading(false)
     }
   }
 
-  function handleStreamEvent(event: any) {
-    if (event.type === 'assistant') {
-      setMessages(prev => {
-        const existing = prev.find(m => m.id === event.id)
-        if (existing) {
-          return prev.map(m => m.id === event.id ? { ...m, ...event } : m)
-        }
-        return [...prev, event]
-      })
-    } else if (event.type === 'tool_use') {
-      setMessages(prev => [...prev, {
-        id: event.id || crypto.randomUUID(),
-        type: 'tool_use',
-        content: event.content,
-        toolName: event.toolName,
-        timestamp: Date.now(),
-      }])
+  function handleStreamEvent(event: StreamEvent) {
+    switch (event.type) {
+      case 'user':
+        break
+
+      case 'assistant':
+        setMessages(prev => {
+          const existing = prev.find(m => m.id === event.id)
+          if (existing) {
+            return prev.map(m => m.id === event.id ? { ...m, content: event.content } : m)
+          }
+          return [...prev, {
+            id: event.id,
+            type: 'assistant',
+            content: event.content,
+            timestamp: event.timestamp,
+          }]
+        })
+        break
+
+      case 'tool_use':
+        setMessages(prev => [...prev, {
+          id: event.id,
+          type: 'tool_use',
+          content: `Calling tool: ${event.toolName}`,
+          toolName: event.toolName,
+          toolInput: event.input,
+          timestamp: event.timestamp,
+        }])
+        break
+
+      case 'tool_result':
+        setMessages(prev => [...prev, {
+          id: event.id,
+          type: 'tool_result',
+          content: event.result.output || event.result.error || '',
+          toolName: event.toolName,
+          toolResult: event.result,
+          timestamp: event.timestamp,
+        }])
+        break
+
+      case 'system':
+        setMessages(prev => [...prev, {
+          id: event.id || crypto.randomUUID(),
+          type: 'system',
+          content: event.content,
+          timestamp: event.timestamp,
+        }])
+        break
+
+      case 'error':
+        setError(event.error)
+        break
+
+      case 'done':
+        break
     }
   }
 
@@ -162,14 +269,38 @@ export function AppWeb() {
         onDeleteSession={handleDeleteSession}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
+        <CommandToolbar
+          onOpenSettings={handleOpenSettings}
+          onOpenCommandPalette={handleOpenCommandPalette}
+          onExecuteCommand={handleExecuteCommand}
+        />
+        {error && (
+          <div className="error-banner">
+            <span>{error}</span>
+            <button onClick={() => setError(null)}>Dismiss</button>
+          </div>
+        )}
         <MessageList messages={messages} isLoading={isLoading} />
         <PromptInput
           value={inputValue}
           onChange={setInputValue}
           onSubmit={handleSubmitQuery}
           disabled={isLoading || !activeSessionId}
+          isLoading={isLoading}
+          onCancel={handleCancelRequest}
         />
       </main>
+
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={handleCloseCommandPalette}
+        onExecuteCommand={handleExecuteCommand}
+      />
+
+      <SettingsManager
+        isOpen={isSettingsOpen}
+        onClose={handleCloseSettings}
+      />
     </div>
   )
 }

@@ -1,0 +1,216 @@
+[
+  {
+    "id": "5e8665d4-2d35-4702-91ae-89d0599a0166",
+    "title": "你好！可以帮你写一个 txt 文件。  请告诉我：  1. ...",
+    "createdAt": 1775616474621,
+    "lastActivityAt": 1775616503867,
+    "messages": [
+      {
+        "id": "26cdaca7-94b2-4aa6-b002-e7679adbab92",
+        "role": "user",
+        "content": "你好 写个txt",
+        "timestamp": 1775616481644
+      },
+      {
+        "id": "9a9c48f3-c3ca-44fa-ac36-aa3df0629e31",
+        "role": "assistant",
+        "content": "你好！可以帮你写一个 txt 文件。\n\n请告诉我：\n\n1. **文件路径**：你想把文件保存在哪里？（例如：`test.txt`、`/home/user/notes.txt`）\n2. **文件内容**：你想写入什么内容？\n\n告诉我这两个信息，我就帮你创建文件。",
+        "timestamp": 1775616485509
+      },
+      {
+        "id": "02c582cc-d975-42a4-9272-c3e547a31779",
+        "role": "user",
+        "content": "写在桌面 空文件 ",
+        "timestamp": 1775616503867
+      }
+    ]
+  },
+  {
+    "id": "e795efe1-ba6f-4b08-bf0c-1c84700c543c",
+    "title": "**What is 2+2?**  2 + 2 = **4*...",
+    "createdAt": 1775616592320,
+    "lastActivityAt": 1775616621353,
+    "messages": [
+      {
+        "id": "03f7537a-bfa5-4013-b0ff-4d2e77a4f15c",
+        "role": "user",
+        "content": "What is 2+2?",
+        "timestamp": 1775616592340
+      },
+      {
+        "id": "6b41a9c8-0c22-4f3e-9619-06db1fd4efde",
+        "role": "assistant",
+        "content": "2+2 = **4**",
+        "timestamp": 1775616601527
+      },
+      {
+        "id": "88ec47d3-cb5a-41c0-aaad-56775dc5777a",
+        "role": "user",
+        "content": "List the files in the current directory using bash ls command",
+        "timestamp": 1775616609922
+      },
+      {
+        "id": "2ade41bd-01e0-421b-b445-a2383355b785",
+        "role": "assistant",
+        "content": "**What is 2+2?**\n\n2 + 2 = **4**\n\n---\n\n**Files in the current directory:**\n",
+        "timestamp": 1775616621352
+      }
+    ]
+  },
+  {
+    "id": "f1ec84e1-1351-4dbf-8796-36785e50b7b2",
+    "title": "New Session",
+    "createdAt": 1775616649158,
+    "lastActivityAt": 1775616649169,
+    "messages": [
+      {
+        "id": "20964684-d049-49d4-b13a-ee85b9b28429",
+        "role": "user",
+        "content": "Run ls to list files",
+        "timestamp": 1775616649169
+      }
+    ]
+  },
+  {
+    "id": "0b427532-2dba-4821-8426-2583a6d4f22e",
+    "title": "Hi! 👋  Let me run the `ls` co...",
+    "createdAt": 1775616675690,
+    "lastActivityAt": 1775616688907,
+    "messages": [
+      {
+        "id": "7220c073-ac9e-47df-9f34-43bc7601428d",
+        "role": "user",
+        "content": "Say hi",
+        "timestamp": 1775616675712
+      },
+      {
+        "id": "3c06f996-c177-46ec-8666-5c3e95cbed94",
+        "role": "assistant",
+        "content": "Hi there! 👋 I'm here to help you with coding tasks. I can assist you with:\n\n- Reading, writing, and editing files\n- Running shell commands\n- Searching for patterns in code\n- Fetching web content\n- Navigating and exploring your project\n\nWhat would you like to work on today?",
+        "timestamp": 1775616681005
+      },
+      {
+        "id": "44be8e77-d8bb-4b95-80f1-40bcc9fb4ac4",
+        "role": "user",
+        "content": "Run ls to list files",
+        "timestamp": 1775616686382
+      },
+      {
+        "id": "3c205fe5-5c88-4d95-94bc-74fe95dfe1c8",
+        "role": "assistant",
+        "content": "Hi! 👋\n\nLet me run the `ls` command to list files in the current directory:\n",
+        "timestamp": 1775616688906
+      }
+    ]
+  },
+  {
+    "id": "09b795bc-65d7-4020-9fa5-6800de50c01a",
+    "title": "Here's a summary of the **pack...",
+    "createdAt": 1775616773413,
+    "lastActivityAt": 1775616834119,
+    "messages": [
+      {
+        "id": "1df1d7dc-a44e-4ddb-b9d1-59f7d44254a4",
+        "role": "user",
+        "content": "List files in current directory using ls",
+        "timestamp": 1775616773434
+      },
+      {
+        "id": "e09c2bc1-1c7f-4bd2-9dd5-4110f7d12f1b",
+        "role": "assistant",
+        "content": "Here's the listing of your current directory:\n\n**Directories:**\n- `.free-code-sessions`\n- `.git`\n- `assets`\n- `node_modules`\n- `scripts`\n- `src`\n\n**Files:**\n- `.DS_Store` (macOS system file)\n- `.env` (environment variables)\n- `.gitignore`\n- `bun.lock` (Bun lockfile)\n- `env.d.ts` (TypeScript env type definitions)\n- `FEATURES.md`\n- `install.sh`\n- `package.json`\n- `README.md`\n- `tsconfig.json`\n\nThis looks like a **Bun-based TypeScript project**. Would you like me to explore the project structure further or help with something specific?",
+        "timestamp": 1775616797392
+      },
+      {
+        "id": "20894100-24d5-4bae-bb8d-ef54a2254281",
+        "role": "user",
+        "content": "Show me the contents of package.json",
+        "timestamp": 1775616819459
+      },
+      {
+        "id": "7957af80-a7ab-4aed-ac99-e876b692048e",
+        "role": "assistant",
+        "content": "Here's a summary of the **package.json**:\n\n| Property | Value |\n|----------|-------|\n| **Name** | claude-code-source-snapshot |\n| **Version** | 2.1.87 |\n| **Package Manager** | Bun 1.3.11+ |\n| **Type** | ES Module |\n| **Entry Points** | `claude` / `claude-source` → `./cli` |\n\n### Scripts Available:\n| Script | Command |\n|--------|---------|\n| `build` | `bun run ./scripts/build.ts` |\n| `dev` | `bun run ./src/entrypoints/cli.tsx` |\n| `web:dev` | `bun run ./src/web/server.ts` |\n| `web:build` | `cd src/web && bun run vite build` |\n| `web:preview` | `cd src/web && bun run vite preview` |\n\n### Key Dependencies:\n- **Anthropic SDKs**: `@anthropic-ai/sdk`, Bedrock, Foundry, Vertex integrations\n- **AWS**: Bedrock & STS clients\n- **AI/ML**: MCP SDK, GrowthBook, Google Auth\n- **CLI**: Ink (React for CLI), Commander, chalk\n- **Web**: Express, React 19, Vite, Tailwind CSS\n\nThis appears to be a **Claude Code CLI tool** with both terminal and web interface capabilities, supporting multiple AI providers (Anthropic, AWS Bedrock, Azure, Google Vertex).",
+        "timestamp": 1775616834119
+      }
+    ]
+  },
+  {
+    "id": "178e3387-d5a7-43e6-8195-bf9d4c1b80b1",
+    "title": "您好！我注意到这是对话的开始，没有之前的上下文。  请问您想...",
+    "createdAt": 1775616959013,
+    "lastActivityAt": 1775616994624,
+    "messages": [
+      {
+        "id": "eeedf211-0076-48b6-a1ea-89a11b6ccc6a",
+        "role": "user",
+        "content": "写好了吗",
+        "timestamp": 1775616963160
+      },
+      {
+        "id": "4e56713d-5e8e-4c03-9599-043d4ce4841b",
+        "role": "assistant",
+        "content": "您好！我这边是一个新的对话，没有看到之前的上下文。请问您需要我帮您完成什么任务呢？您可以描述一下需求，我会尽力帮助您。",
+        "timestamp": 1775616970404
+      },
+      {
+        "id": "23c46de2-29c8-4c0d-bd79-e1a731d665b7",
+        "role": "user",
+        "content": "写一个txt",
+        "timestamp": 1775616976689
+      },
+      {
+        "id": "475efed5-6bcb-4702-9467-5403a1048416",
+        "role": "assistant",
+        "content": "您好！我注意到这是对话的开始，没有之前的上下文。\n\n请问您想要我创建一个什么样的 txt 文件？请告诉我：\n\n1. **文件名**是什么？\n2. **文件内容**要写什么？\n\n我会帮您创建这个文本文件。",
+        "timestamp": 1775616981726
+      },
+      {
+        "id": "56dfe360-b6c3-48e3-ae25-1c9f5d9aecc1",
+        "role": "user",
+        "content": "写在桌面 txt",
+        "timestamp": 1775616994624
+      }
+    ]
+  },
+  {
+    "id": "7d468a48-77ff-4034-8aa8-379d4e53cdb5",
+    "title": "你好！有什么我可以帮助你的吗？我可以帮你：  - 编写和编辑...",
+    "createdAt": 1775617684531,
+    "lastActivityAt": 1775617690674,
+    "messages": [
+      {
+        "id": "c72a4bc0-2f10-4041-b19e-6d23f4592b77",
+        "role": "user",
+        "content": "你好",
+        "timestamp": 1775617686794
+      },
+      {
+        "id": "8df23397-0a0d-40d7-b383-7954f7b5cdce",
+        "role": "assistant",
+        "content": "你好！有什么我可以帮助你的吗？我可以帮你：\n\n- 编写和编辑代码\n- 浏览和搜索文件\n- 运行 shell 命令\n- 获取网页内容\n- 调试问题\n\n请告诉我你需要什么帮助！",
+        "timestamp": 1775617690673
+      }
+    ]
+  },
+  {
+    "id": "70d80d46-ae94-41c4-a80b-82b039cb5342",
+    "title": "你好！有什么我可以帮助你的吗？我可以协助你进行文件操作、运行...",
+    "createdAt": 1775617730775,
+    "lastActivityAt": 1775617744768,
+    "messages": [
+      {
+        "id": "13417651-e2d2-46b0-b209-6e7338d1db16",
+        "role": "user",
+        "content": "你好",
+        "timestamp": 1775617733015
+      },
+      {
+        "id": "5e0a559e-71b9-4835-9037-e964ec39d26c",
+        "role": "assistant",
+        "content": "你好！有什么我可以帮助你的吗？我可以协助你进行文件操作、运行命令、搜索代码等开发相关任务。",
+        "timestamp": 1775617744768
+      }
+    ]
+  }
+]

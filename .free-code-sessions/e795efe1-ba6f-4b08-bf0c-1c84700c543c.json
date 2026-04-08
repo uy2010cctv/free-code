@@ -1,0 +1,26 @@
+{
+  "id": "e795efe1-ba6f-4b08-bf0c-1c84700c543c",
+  "title": "**What is 2+2?**  2 + 2 = **4*...",
+  "createdAt": 1775616592320,
+  "lastActivityAt": 1775616621353,
+  "messages": [
+    {
+      "id": "03f7537a-bfa5-4013-b0ff-4d2e77a4f15c",
+      "role": "user",
+      "content": "What is 2+2?",
+      "timestamp": 1775616592340
+    },
+    {
+      "id": "6b41a9c8-0c22-4f3e-9619-06db1fd4efde",
+      "role": "assistant",
+      "content": "2+2 = **4**",
+      "timestamp": 1775616601527
+    },
+    {
+      "id": "88ec47d3-cb5a-41c0-aaad-56775dc5777a",
+      "role": "user",
+      "content": "List the files in the current directory using bash ls command",
+      "timestamp": 1775616609922
+    }
+  ]
+}

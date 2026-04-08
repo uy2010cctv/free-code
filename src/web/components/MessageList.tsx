@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import type { Message } from '../types'
+import { CodeBlock } from './CodeBlock'
+import { ToolResultPanel } from './ToolResultPanel'
 
 interface MessageListProps {
   messages: Message[]
@@ -34,55 +36,139 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }
 
   function renderContent(content: string): React.ReactNode {
-    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```|`([^`]+)`/
-    if (codeBlockRegex.test(content)) {
-      const parts: React.ReactNode[] = []
-      let lastIndex = 0
-      const regex = /```(\w+)?\n([\s\S]*?)```|`([^`]+)`/g
-      let match
+    if (!content) return null
 
-      while ((match = regex.exec(content)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(content.slice(lastIndex, match.index))
-        }
-        if (match[3]) {
-          parts.push(<code key={match.index} className="bg-term-surface px-1.5 py-0.5 rounded text-sm">{match[3]}</code>)
-        } else {
-          const lang = match[1] || ''
-          const code = match[2]
-          parts.push(
-            <pre key={match.index} className="bg-term-surface p-3 rounded-md overflow-x-auto my-2">
-              <code>{code}</code>
-            </pre>
-          )
-        }
-        lastIndex = match.index + match[0].length
-      }
-      if (lastIndex < content.length) {
-        parts.push(content.slice(lastIndex))
-      }
-      return parts
+    const parts: React.ReactNode[] = []
+    let lastIndex = 0
+
+    // Match code blocks and inline code
+    const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g
+    const inlineCodeRegex = /`([^`]+)`/g
+
+    // Find all matches
+    const matches: { type: 'block' | 'inline'; start: number; end: number; content: string; lang?: string }[] = []
+
+    let match
+
+    // Code blocks
+    while ((match = codeBlockRegex.exec(content)) !== null) {
+      matches.push({
+        type: 'block',
+        start: match.index,
+        end: match.index + match[0].length,
+        content: match[2],
+        lang: match[1] || 'plaintext',
+      })
     }
-    return content
+
+    // Find inline code (that isn't already in a code block)
+    while ((match = inlineCodeRegex.exec(content)) !== null) {
+      const isInBlock = matches.some(m => m.start <= match!.index && m.end >= match!.index + match![0].length)
+      if (!isInBlock) {
+        matches.push({
+          type: 'inline',
+          start: match.index,
+          end: match.index + match[0].length,
+          content: match[1],
+        })
+      }
+    }
+
+    // Sort by position
+    matches.sort((a, b) => a.start - b.start)
+
+    // Build parts
+    for (const m of matches) {
+      if (m.start > lastIndex) {
+        parts.push(content.slice(lastIndex, m.start))
+      }
+
+      if (m.type === 'block') {
+        parts.push(
+          <CodeBlock key={m.start} code={m.content} language={m.lang} />
+        )
+      } else {
+        parts.push(
+          <code key={m.start} className="inline-code">{m.content}</code>
+        )
+      }
+
+      lastIndex = m.end
+    }
+
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex))
+    }
+
+    return parts.length > 0 ? parts : content
+  }
+
+  function renderMessage(msg: Message): React.ReactNode {
+    if (msg.type === 'tool_result' && msg.toolResult) {
+      return (
+        <ToolResultPanel
+          toolName={msg.toolName || 'tool'}
+          input={msg.toolInput || {}}
+          result={msg.toolResult}
+          isExpanded={true}
+        />
+      )
+    }
+
+    return renderContent(msg.content)
+  }
+
+  function getRoleLabel(msg: Message): string {
+    switch (msg.type) {
+      case 'user':
+        return 'user'
+      case 'assistant':
+        return 'assistant'
+      case 'tool_use':
+        return msg.toolName || 'tool'
+      case 'tool_result':
+        return `${msg.toolName} result`
+      case 'system':
+        return 'system'
+      default:
+        return msg.type
+    }
+  }
+
+  function getRoleClass(msg: Message): string {
+    switch (msg.type) {
+      case 'user':
+        return 'user'
+      case 'assistant':
+        return 'assistant'
+      case 'tool_use':
+        return 'tool'
+      case 'tool_result':
+        return msg.toolResult?.success ? 'tool-success' : 'tool-error'
+      case 'system':
+        return 'system'
+      default:
+        return 'default'
+    }
   }
 
   return (
     <div ref={containerRef} className="message-list">
       {messages.map((msg) => (
-        <div key={msg.id} className="message-row">
+        <div key={msg.id} className={`message-row message-${msg.type}`}>
           <div className="message-header">
-            <span className={`message-role ${msg.type === 'user' ? 'user' : msg.type === 'assistant' ? 'assistant' : 'tool'}`}>
-              {msg.type === 'tool_use' ? (msg.toolName || 'tool') : msg.type}
+            <span className={`message-role ${getRoleClass(msg)}`}>
+              {getRoleLabel(msg)}
             </span>
             <span className="message-timestamp">{formatTime(msg.timestamp)}</span>
           </div>
           <div className="message-content">
-            {renderContent(msg.content)}
+            {renderMessage(msg)}
           </div>
         </div>
       ))}
       {isLoading && (
-        <div className="message-row">
+        <div className="message-row message-assistant">
           <div className="message-header">
             <span className="message-role assistant">assistant</span>
             <span className="message-timestamp">thinking...</span>
