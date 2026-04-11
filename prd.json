@@ -72,8 +72,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "WebWordTool exists with create/read/append actions; registered in engine"
     },
     {
       "id": "US-006",
@@ -86,8 +86,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added text formatting (bold, italic, underline, color, size), paragraph alignment (left, center, right, justify), and table support via 'table' action"
     },
     {
       "id": "US-007",

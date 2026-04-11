@@ -4,6 +4,20 @@
 - Document tools (WebWordTool, WebExcelTool) should use workspace-relative paths for document operations
 - DocumentManager class provides unified document APIs: createDocument, listDocuments, readDocument, writeDocument
 - Document file extensions: .docx/.doc for Word, .xlsx/.xls for Excel
+- docx library uses TextRun for text formatting (bold, italic, underline, color, size)
+- Paragraph alignment via AlignmentType enum (CENTER, LEFT, RIGHT, JUSTIFIED)
+- Tables created with Table, TableRow, TableCell classes from docx
+
+## 2026-04-11 11:15 AM - US-006
+- Enhanced WebWordTool with text formatting: bold, italic, underline, color, size
+- Added paragraph alignment: left, center, right, justify
+- Added table support via 'table' action with headers and rows
+- Files changed: src/web/engine/tools/WebWordTool.ts
+- **Learnings for future iterations:**
+  - docx TextRun options: bold, italic, underline: {} (underline needs empty object), color (hex), size (half-points)
+  - AlignmentType values: CENTER, LEFT, RIGHT, JUSTIFIED from docx
+  - Table cells contain Paragraph arrays with TextRun children
+---
 
 ## 2026-04-11 11:05 AM - US-002, US-003, US-004
 - Created DocumentManager class in src/web/engine/tools/DocumentManager.ts
@@ -18,6 +32,7 @@
   - DocumentManager is instantiated with workspacePath for document operations
 ---
 
+## 2026-04-11 10:55 AM - US-001
 - Implemented workspace folder structure per session
 - Changed workspace path from `.free-code-sessions/[session-id]/` to `workspace/[session-id]/`
 - Updated both the workspacePath in session data and the mkdir call
