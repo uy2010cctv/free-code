@@ -133,8 +133,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DocxPreview component created with docx-preview rendering and zoom controls; integrated into WorkspacePanel"
     },
     {
       "id": "US-010",
@@ -150,8 +150,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "ExcelPreview component created with xlsx rendering, sheet tabs, formula display, and zoom controls; integrated into WorkspacePanel"
     },
     {
       "id": "US-011",

@@ -11,6 +11,20 @@
 - xlsx cell formulas set via cell.f property, styles via cell.s property
 - xlsx column/row dimensions set via worksheet['!cols'] and worksheet['!rows']
 - xlsx cell merges set via worksheet['!merges'] array
+- docx-preview renders Word documents in browser via renderAsync function
+- Preview components should detect file type from extension and render appropriately
+
+## 2026-04-11 11:35 AM - US-009, US-010
+- Created DocxPreview component using docx-preview library with zoom controls
+- Created ExcelPreview component using xlsx library with sheet tabs and formula display
+- Updated WorkspacePanel to detect file type and use appropriate preview component
+- Files changed: src/web/components/DocxPreview.tsx, src/web/components/ExcelPreview.tsx, src/web/components/WorkspacePanel.tsx
+- **Learnings for future iterations:**
+  - docx-preview renderAsync takes buffer, container element, and options object
+  - xlsx utils.sheet_to_json with header: 1 returns 2D array of cell values
+  - File type detection uses extension: .docx/.doc = word, .xlsx/.xls = excel
+  - Use previewKey state to force re-render when file changes
+---
 
 ## 2026-04-11 11:25 AM - US-007, US-008
 - Created WebExcelTool with create, read, write, addSheet actions
