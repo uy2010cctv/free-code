@@ -2,8 +2,22 @@
 - SessionManager stores session workspace paths using `resolve(this.cwd, 'workspace', id)` format
 - The workspace folder is created via `mkdir(resolve(this.cwd, 'workspace', id), { recursive: true })`
 - Document tools (WebWordTool, WebExcelTool) should use workspace-relative paths for document operations
+- DocumentManager class provides unified document APIs: createDocument, listDocuments, readDocument, writeDocument
+- Document file extensions: .docx/.doc for Word, .xlsx/.xls for Excel
 
-## 2026-04-11 10:55 AM - US-001
+## 2026-04-11 11:05 AM - US-002, US-003, US-004
+- Created DocumentManager class in src/web/engine/tools/DocumentManager.ts
+- DocumentManager provides: createDocument(type, filename), listDocuments(), readDocument(filename), writeDocument(filename, content)
+- Installed docx-preview package (docx was already installed)
+- Installed xlsx package for Excel document handling
+- Files changed: src/web/engine/tools/DocumentManager.ts, package.json, package-lock.json
+- **Learnings for future iterations:**
+  - Use `XLSX.read(buffer, { type: 'buffer' })` to parse Excel files
+  - Use `XLSX.utils.book_new()` and `XLSX.utils.book_append_sheet()` to create Excel files
+  - docx Document constructor takes sections with children (paragraphs)
+  - DocumentManager is instantiated with workspacePath for document operations
+---
+
 - Implemented workspace folder structure per session
 - Changed workspace path from `.free-code-sessions/[session-id]/` to `workspace/[session-id]/`
 - Updated both the workspacePath in session data and the mkdir call

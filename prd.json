@@ -29,8 +29,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DocumentManager class created with createDocument, listDocuments, readDocument, writeDocument methods"
     },
     {
       "id": "US-003",
@@ -43,8 +43,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "docx was already installed; docx-preview package installed successfully"
     },
     {
       "id": "US-004",
@@ -56,8 +56,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "xlsx package installed successfully"
     },
     {
       "id": "US-005",
