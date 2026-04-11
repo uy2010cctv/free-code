@@ -13,6 +13,21 @@
 - xlsx cell merges set via worksheet['!merges'] array
 - docx-preview renders Word documents in browser via renderAsync function
 - Preview components should detect file type from extension and render appropriately
+- Fullscreen API uses requestFullscreen() and fullscreenchange event
+- Browser download via Blob + URL.createObjectURL + anchor click
+
+## 2026-04-11 11:45 AM - US-011, US-012, US-013, US-014
+- Added manual refresh button (↻) with load time display to DocxPreview and ExcelPreview
+- Added fullscreen toggle button (⊞/⊠) with ESC key handling via fullscreenchange event
+- Added download button (↓) to both preview components with Blob download
+- Updated system prompt to mention Word and Excel document tools
+- Files changed: src/web/components/DocxPreview.tsx, src/web/components/ExcelPreview.tsx, src/web/engine/SessionManager.ts
+- **Learnings for future iterations:**
+  - Use useRef for container and wrapper elements in preview components
+  - fullscreenchange event listener must be cleaned up in useEffect return
+  - Download uses Blob with correct MIME type: application/vnd.openxmlformats-officedocument.wordprocessingml.document for docx
+  - Download uses Blob with correct MIME type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet for xlsx
+---
 
 ## 2026-04-11 11:35 AM - US-009, US-010
 - Created DocxPreview component using docx-preview library with zoom controls

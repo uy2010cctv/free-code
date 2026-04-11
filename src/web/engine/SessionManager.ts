@@ -148,6 +148,9 @@ export class SessionManager {
       workspacePath,
       systemPrompt: `You are a helpful AI coding assistant.
 You have access to tools for file operations, running shell commands, and web requests.
+You can also create and edit Word (.docx) and Excel (.xlsx) documents.
+For Word documents, use the 'word' tool with actions: create, append, replace, read, table.
+For Excel documents, use the 'excel' tool with actions: create, read, write, addSheet, formula, style, resize, merge.
 When using tools, describe what you're doing in your response.
 Always be concise and helpful.`,
     })
