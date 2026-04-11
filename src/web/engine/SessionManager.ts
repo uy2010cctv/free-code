@@ -9,6 +9,11 @@ import { WebWriteFileTool } from './tools/WebWriteFileTool'
 import { WebGlobTool } from './tools/WebGlobTool'
 import { WebGrepTool } from './tools/WebGrepTool'
 import { WebFetchTool } from './tools/WebFetchTool'
+import { WebSkillTool } from './tools/WebSkillTool'
+import { WebWordTool } from './tools/WebWordTool'
+import type { Command } from '../../../types/command'
+import { getSkillDirCommands } from '../../skills/loadSkillsDir.ts'
+import { getBundledSkills } from '../../skills/bundledSkills.ts'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -19,6 +24,7 @@ interface SessionData {
   createdAt: number
   lastActivityAt: number
   messages: Message[]
+  workspacePath: string
 }
 
 export class SessionManager {
@@ -26,6 +32,7 @@ export class SessionManager {
   private engines: Map<string, WebQueryEngine> = new Map()
   private sessionsPath: string
   private cwd: string
+  private skills: Map<string, Command> = new Map()
 
   constructor(cwd: string = process.cwd()) {
     this.cwd = cwd
@@ -36,8 +43,33 @@ export class SessionManager {
     try {
       await mkdir(this.sessionsPath, { recursive: true })
       await this.loadSessions()
+      await this.loadSkills()
     } catch (error) {
       console.error('Failed to initialize session manager:', error)
+    }
+  }
+
+  private async loadSkills(): Promise<void> {
+    try {
+      // Load bundled skills
+      const bundled = await getBundledSkills()
+      for (const cmd of bundled) {
+        if (cmd.type === 'prompt' && cmd.name) {
+          this.skills.set(cmd.name, cmd)
+        }
+      }
+
+      // Load skills from disk
+      const skillDirCmds = await getSkillDirCommands(this.cwd)
+      for (const cmd of skillDirCmds) {
+        if (cmd.type === 'prompt' && cmd.name) {
+          this.skills.set(cmd.name, cmd)
+        }
+      }
+
+      console.log(`Loaded ${this.skills.size} skills`)
+    } catch (error) {
+      console.error('Failed to load skills:', error)
     }
   }
 
@@ -82,11 +114,15 @@ export class SessionManager {
       createdAt: Date.now(),
       lastActivityAt: Date.now(),
       messages: [],
+      workspacePath: resolve(this.cwd, 'workspace', id),
     }
     this.sessions.set(id, session)
 
+    // Create workspace folder for this session
+    mkdir(resolve(this.cwd, 'workspace', id), { recursive: true }).catch(console.error)
+
     // Create engine for this session
-    const engine = this.createEngine()
+    const engine = this.createEngine(id)
     this.engines.set(id, engine)
 
     // Save to disk
@@ -95,14 +131,20 @@ export class SessionManager {
     return this.toSession(session)
   }
 
-  private createEngine(): WebQueryEngine {
+  private createEngine(sessionId: string): WebQueryEngine {
     // Get API key from settings or environment
     const apiKey = process.env.ANTHROPIC_API_KEY || ''
     const baseURL = process.env.ANTHROPIC_BASE_URL || 'https://api.minimaxi.com/anthropic'
 
+    // Get workspace path for this session
+    const session = this.sessions.get(sessionId)
+    const workspacePath = session?.workspacePath || ''
+
     const engine = new WebQueryEngine({
       apiKey,
       baseURL,
+      sessionId,
+      workspacePath,
       systemPrompt: `You are a helpful AI coding assistant.
 You have access to tools for file operations, running shell commands, and web requests.
 When using tools, describe what you're doing in your response.
@@ -117,6 +159,8 @@ Always be concise and helpful.`,
       new WebGlobTool(),
       new WebGrepTool(),
       new WebFetchTool(),
+      new WebSkillTool(this.skills, this.cwd),
+      new WebWordTool(),
     ])
 
     return engine
@@ -167,6 +211,98 @@ Always be concise and helpful.`,
     }
   }
 
+  rewindConversationTo(sessionId: string, messageId: string): boolean {
+    const session = this.sessions.get(sessionId)
+    if (!session) return false
+    const index = session.messages.findIndex(m => m.id === messageId)
+    if (index === -1) return false
+    session.messages = session.messages.slice(0, index)
+    session.lastActivityAt = Date.now()
+    this.saveSession(sessionId).catch(console.error)
+    return true
+  }
+
+  getSelectableMessagesForRewind(sessionId: string): Message[] {
+    const session = this.sessions.get(sessionId)
+    if (!session) return []
+    return session.messages.filter(msg => {
+      if (msg.type !== 'user' && msg.role !== 'user') return false
+      const content = typeof msg.content === 'string' ? msg.content : ''
+      if (content.includes('<tool_result>')) return false
+      if (msg.isMeta || msg.isSynthetic || msg.isCompactSummary) return false
+      if (content.includes('<local_command_stdout>') || content.includes('<local_command_stderr>') ||
+          content.includes('<bash_stdout>') || content.includes('<bash_stderr>') ||
+          content.includes('<task_notification>') || content.includes('<tick>')) return false
+      return true
+    })
+  }
+
+  getSkills(): Command[] {
+    return Array.from(this.skills.values())
+  }
+
+  findSkill(skillName: string): Command | undefined {
+    return this.skills.get(skillName)
+  }
+
+  async executeSkill(skillName: string, args: string = ''): Promise<{ success: boolean; output?: string; error?: string }> {
+    const command = this.skills.get(skillName)
+    if (!command || command.type !== 'prompt') {
+      return { success: false, error: `Skill '${skillName}' not found` }
+    }
+
+    try {
+      const toolUseContext = {
+        abortController: new AbortController(),
+        messages: [],
+        options: {
+          commands: [],
+          debug: false,
+          mainLoopModel: '',
+          tools: {},
+          verbose: false,
+          thinkingConfig: { type: 'off' },
+          mcpClients: [],
+          mcpResources: {},
+          isNonInteractiveSession: false,
+          agentDefinitions: { agents: [] },
+        },
+        readFileState: {
+          has: () => false,
+          get: () => undefined,
+          set: () => {},
+        },
+        getAppState: () => ({
+          toolPermissionContext: {
+            mode: 'acceptEdits' as const,
+            alwaysAllowRules: { command: [] },
+          },
+          fileHistory: { canRestore: false },
+        }),
+        setAppState: () => {},
+        setInProgressToolUseIDs: () => {},
+        setResponseLength: () => {},
+        updateFileHistoryState: () => {},
+        updateAttributionState: () => {},
+        nestedMemoryAttachmentTriggers: new Set(),
+        loadedNestedMemoryPaths: new Set(),
+        dynamicSkillDirTriggers: new Set(),
+        discoveredSkillNames: new Set(),
+        userModified: false,
+      }
+
+      const result = await command.getPromptForCommand(args, toolUseContext as any)
+      const text = result
+        .filter((r): r is { type: 'text'; text: string } => r.type === 'text')
+        .map(r => r.text)
+        .join('\n')
+
+      return { success: true, output: text }
+    } catch (error: any) {
+      return { success: false, error: error.message || String(error) }
+    }
+  }
+
   private toSession(data: SessionData): Session {
     return {
       id: data.id,
@@ -174,6 +310,7 @@ Always be concise and helpful.`,
       createdAt: data.createdAt,
       lastActivityAt: data.lastActivityAt,
       messages: data.messages,
+      workspacePath: data.workspacePath,
     }
   }
 }

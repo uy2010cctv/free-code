@@ -1,0 +1,215 @@
+{
+  "project": "free-code Web",
+  "branchName": "ralph/document-editing",
+  "description": "Add Word (.docx) and Excel (.xlsx) document creation, editing, and real-time preview capabilities to free-code Web AI Agent",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Setup workspace folder structure per session",
+      "description": "As a system, I need each session to have its own workspace folder so documents are isolated.",
+      "acceptanceCriteria": [
+        "Create workspace/[session-id]/ directory on session init",
+        "Directory path follows format: workspace/[session-id]/",
+        "Document APIs can reference workspace-relative paths",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add document file system APIs",
+      "description": "As an Agent, I need file system operations so I can manage documents in workspace.",
+      "acceptanceCriteria": [
+        "Add createDocument(type: 'word'|'excel', filename: string) function",
+        "Add listDocuments() returns array of filenames",
+        "Add readDocument(filename: string) returns document content",
+        "Add writeDocument(filename: string, content: Buffer) saves to workspace",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Install docx and preview packages",
+      "description": "As a developer, I need the docx packages installed so I can work with Word documents.",
+      "acceptanceCriteria": [
+        "Install 'docx' package for Word document generation",
+        "Install 'docx-preview' package for Word document preview",
+        "Packages are compatible with current Bun/TypeScript setup",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Install xlsx package for Excel",
+      "description": "As a developer, I need the xlsx package installed so I can work with Excel documents.",
+      "acceptanceCriteria": [
+        "Install 'xlsx' package for Excel document handling",
+        "Package supports .xlsx format read/write",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create WebWordTool for Word document operations",
+      "description": "As an Agent, I need a Word document tool so I can create and edit documents.",
+      "acceptanceCriteria": [
+        "WebWordTool class created in src/web/engine/tools/",
+        "Supports createDocument(filename, options) with title, paragraphs",
+        "Supports readDocument(filename) returning parsed content",
+        "Supports writeDocument(filename, content) saving changes",
+        "Tool registered in WebSkillTool registry",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add Word document formatting support",
+      "description": "As an Agent, I need to format Word documents so I can fulfill style requests.",
+      "acceptanceCriteria": [
+        "WebWordTool supports text formatting: bold, italic, underline, color, size",
+        "WebWordTool supports paragraph alignment: left, center, right, justify",
+        "WebWordTool supports adding tables to documents",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create WebExcelTool for Excel document operations",
+      "description": "As an Agent, I need an Excel document tool so I can create and edit spreadsheets.",
+      "acceptanceCriteria": [
+        "WebExcelTool class created in src/web/engine/tools/",
+        "Supports createWorkbook(filename) with multiple sheets",
+        "Supports readWorkbook(filename) returning parsed data",
+        "Supports writeWorkbook(filename, data) saving changes",
+        "Tool registered in WebSkillTool registry",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add Excel formula and styling support",
+      "description": "As an Agent, I need Excel formulas and styling so I can handle complex spreadsheet tasks.",
+      "acceptanceCriteria": [
+        "WebExcelTool supports cell formulas (SUM, AVERAGE, etc.)",
+        "WebExcelTool supports cell styling: font, background, border",
+        "WebExcelTool supports column/row resize",
+        "WebExcelTool supports cell merge/split",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add Word preview component to WorkspacePanel",
+      "description": "As a user, I want to see Word document previews inline so I can verify edits.",
+      "acceptanceCriteria": [
+        "Add DocxPreview component in src/web/components/",
+        "Component renders .docx files in browser using docx-preview",
+        "Preview displays in WorkspacePanel when Word doc selected",
+        "Preview supports scroll and zoom",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Add Excel preview component to WorkspacePanel",
+      "description": "As a user, I want to see Excel spreadsheet previews inline so I can verify edits.",
+      "acceptanceCriteria": [
+        "Add ExcelPreview component in src/web/components/",
+        "Component renders .xlsx files using xlsx library",
+        "Preview displays in WorkspacePanel when Excel doc selected",
+        "Preview shows cell values, formulas visible",
+        "Preview supports scroll and zoom",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Add preview refresh mechanism",
+      "description": "As a user, I want preview to update automatically so I see edits immediately.",
+      "acceptanceCriteria": [
+        "Preview refreshes when document is modified",
+        "Manual refresh button available in preview panel",
+        "Refresh latency under 500ms for documents under 1MB",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Add preview fullscreen mode",
+      "description": "As a user, I want fullscreen preview so I can focus on document content.",
+      "acceptanceCriteria": [
+        "Fullscreen toggle button in preview panel header",
+        "ESC key exits fullscreen mode",
+        "Preview fills entire viewport in fullscreen",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Add document export to local download",
+      "description": "As a user, I want to download documents so I can use them outside the app.",
+      "acceptanceCriteria": [
+        "Download button in preview panel for each document",
+        "Downloads .docx or .xlsx file to local machine",
+        "Filename matches document name in workspace",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Integrate document tools with Agent prompt",
+      "description": "As an Agent, I need to understand document commands so I can fulfill requests.",
+      "acceptanceCriteria": [
+        "WebWordTool and WebExcelTool available in agent tool list",
+        "Agent can parse 'create a Word doc named X'",
+        "Agent can parse 'edit cell A1 in spreadsheet.xlsx'",
+        "Agent can parse 'format title as red bold'",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+## Codebase Patterns
+- SessionManager stores session workspace paths using `resolve(this.cwd, 'workspace', id)` format
+- The workspace folder is created via `mkdir(resolve(this.cwd, 'workspace', id), { recursive: true })`
+- Document tools (WebWordTool, WebExcelTool) should use workspace-relative paths for document operations
+
+## 2026-04-11 10:55 AM - US-001
+- Implemented workspace folder structure per session
+- Changed workspace path from `.free-code-sessions/[session-id]/` to `workspace/[session-id]/`
+- Updated both the workspacePath in session data and the mkdir call
+- Files changed: src/web/engine/SessionManager.ts
+- **Learnings for future iterations:**
+  - The `cwd` field in SessionManager is set from constructor parameter or process.cwd()
+  - Always update both the workspacePath in session data AND the corresponding mkdir call
+  - The tsconfig deprecation warning for baseUrl is pre-existing and not related to project code
+---
