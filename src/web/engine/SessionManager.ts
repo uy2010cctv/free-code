@@ -11,6 +11,7 @@ import { WebGrepTool } from './tools/WebGrepTool'
 import { WebFetchTool } from './tools/WebFetchTool'
 import { WebSkillTool } from './tools/WebSkillTool'
 import { WebWordTool } from './tools/WebWordTool'
+import { WebExcelTool } from './tools/WebExcelTool'
 import type { Command } from '../../../types/command'
 import { getSkillDirCommands } from '../../skills/loadSkillsDir.ts'
 import { getBundledSkills } from '../../skills/bundledSkills.ts'
@@ -161,6 +162,7 @@ Always be concise and helpful.`,
       new WebFetchTool(),
       new WebSkillTool(this.skills, this.cwd),
       new WebWordTool(),
+      new WebExcelTool(),
     ])
 
     return engine

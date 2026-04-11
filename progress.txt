@@ -7,6 +7,26 @@
 - docx library uses TextRun for text formatting (bold, italic, underline, color, size)
 - Paragraph alignment via AlignmentType enum (CENTER, LEFT, RIGHT, JUSTIFIED)
 - Tables created with Table, TableRow, TableCell classes from docx
+- xlsx library uses XLSX.WorkBook, XLSX.WorkSheet for Excel files
+- xlsx cell formulas set via cell.f property, styles via cell.s property
+- xlsx column/row dimensions set via worksheet['!cols'] and worksheet['!rows']
+- xlsx cell merges set via worksheet['!merges'] array
+
+## 2026-04-11 11:25 AM - US-007, US-008
+- Created WebExcelTool with create, read, write, addSheet actions
+- Enhanced WebExcelTool with formula support (formula action)
+- Added styling support (style action: font, fill, border, alignment)
+- Added resize support (resize action: col/row dimensions)
+- Added merge support (merge action: cell ranges)
+- WebExcelTool registered in SessionManager engine
+- Files changed: src/web/engine/tools/WebExcelTool.ts, src/web/engine/SessionManager.ts
+- **Learnings for future iterations:**
+  - xlsx cell formula stored in cell.f property, value in cell.v
+  - xlsx styles applied via cell.s property (Style object)
+  - Column widths set via worksheet['!cols'][index] = { wch: width }
+  - Row heights set via worksheet['!rows'][index] = { hpt: height }
+  - Cell merges set via worksheet['!merges'] = ['A1:C3', ...]
+---
 
 ## 2026-04-11 11:15 AM - US-006
 - Enhanced WebWordTool with text formatting: bold, italic, underline, color, size

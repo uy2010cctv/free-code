@@ -102,8 +102,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "WebExcelTool created with create, read, write, addSheet actions; registered in engine"
     },
     {
       "id": "US-008",
@@ -117,8 +117,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added formula support via 'formula' action, styling via 'style' action (font, fill, border, alignment), resize via 'resize' action (cols/rows), merge via 'merge' action"
     },
     {
       "id": "US-009",
