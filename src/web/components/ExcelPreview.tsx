@@ -3,11 +3,12 @@ import * as XLSX from 'xlsx'
 
 interface ExcelPreviewProps {
   filePath: string
+  sessionId?: string
   onError?: (error: string) => void
   refreshKey?: number
 }
 
-export function ExcelPreview({ filePath, onError, refreshKey = 0 }: ExcelPreviewProps) {
+export function ExcelPreview({ filePath, sessionId, onError, refreshKey = 0 }: ExcelPreviewProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,14 +27,30 @@ export function ExcelPreview({ filePath, onError, refreshKey = 0 }: ExcelPreview
     setError(null)
 
     try {
-      const response = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
+      let response: Response
+      let data: any
+
+      if (sessionId) {
+        // Use session workspace endpoint
+        const fileName = filePath.split('/').pop() || filePath
+        response = await fetch(`/api/sessions/${sessionId}/workspace/read?path=${encodeURIComponent(fileName)}`)
+      } else {
+        // Use direct file path
+        response = await fetch(`/api/files/read?path=${encodeURIComponent(filePath)}`)
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to load workbook: ${response.statusText}`)
       }
 
-      const data = await response.json()
-      // Content is base64 encoded
-      const buffer = Uint8Array.from(atob(data.content), c => c.charCodeAt(0))
+      data = await response.json()
+      // Handle both base64 (binary) and utf-8 (text) content
+      let buffer: Uint8Array
+      if (data.isBinary) {
+        buffer = Uint8Array.from(atob(data.content), c => c.charCodeAt(0))
+      } else {
+        buffer = new TextEncoder().encode(data.content)
+      }
 
       const wb = XLSX.read(buffer, { type: 'array' })
       setWorkbook(wb)

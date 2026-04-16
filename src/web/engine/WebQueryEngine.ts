@@ -9,6 +9,7 @@ export class WebQueryEngine {
   private systemPrompt: string
   private model: string
   private maxTokens: number
+  private sessionId: string
 
   constructor(config: {
     apiKey: string
@@ -16,12 +17,23 @@ export class WebQueryEngine {
     model?: string
     systemPrompt?: string
     maxTokens?: number
+    sessionId?: string
+    workspacePath?: string
   }) {
     this.anthropic = new Anthropic({
       apiKey: config.apiKey,
       baseURL: config.baseURL,
     })
+    this.sessionId = config.sessionId || crypto.randomUUID()
     this.model = config.model || 'claude-sonnet-4-6-20250514'
+    this.maxTokens = config.maxTokens || 4096
+
+    const workspacePath = config.workspacePath || ''
+    const workspaceRestriction = workspacePath
+      ? `\n\nCRITICAL SECURITY RESTRICTION: You can ONLY read, write, edit, and access files within your dedicated session workspace folder: "${workspacePath}"
+All file operations (bash, read_file, write_file, glob, grep) MUST target files inside this folder. Never attempt to access files outside this folder. This is enforced for security.`
+      : ''
+
     this.systemPrompt = config.systemPrompt || `You are a helpful AI coding assistant with access to tools.
 You have access to the following tools:
 - bash: Run shell commands (always use for listing files, running scripts, etc.)
@@ -30,10 +42,10 @@ You have access to the following tools:
 - glob: Find files matching a pattern
 - grep: Search for text in files
 - web_fetch: Fetch content from URLs
+- word: Create and edit Microsoft Word documents (.docx)
 
-IMPORTANT: When the user asks you to perform tasks that require tools (like listing files, running commands, reading/writing files), you MUST use the appropriate tool. Do not just describe what you would do - actually use the tool.
+IMPORTANT: When the user asks you to perform tasks that require tools (like listing files, running commands, reading/writing files), you MUST use the appropriate tool. Do not just describe what you would do - actually use the tool.${workspaceRestriction}
 Always be concise and helpful.`
-    this.maxTokens = config.maxTokens || 4096
   }
 
   registerTool(tool: Tool): void {
@@ -52,6 +64,10 @@ Always be concise and helpful.`
 
   clearHistory(): void {
     this.messages = []
+  }
+
+  getSessionId(): string {
+    return this.sessionId
   }
 
   async *submitMessage(

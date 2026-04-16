@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import type { WebSettings, McpServer } from '../types/settings'
 import { COMMANDS, getCommandsByCategory } from '../data/commands'
 import type { Command } from '../types/settings'
+import { useTranslation } from '../i18n'
+import type { Language } from '../i18n/translations'
 
 interface SettingsManagerProps {
   isOpen: boolean
@@ -74,6 +76,7 @@ const DEFAULT_SETTINGS: WebSettings = {
 }
 
 export function SettingsManager({ isOpen, onClose }: SettingsManagerProps) {
+  const { language, setLanguage, t } = useTranslation()
   const [settings, setSettings] = useState<WebSettings>(DEFAULT_SETTINGS)
   const [activeTab, setActiveTab] = useState<'api' | 'permissions' | 'ui' | 'sessions' | 'commands' | 'system'>('api')
   const [mcpServers, setMcpServers] = useState<McpServer[]>([])
@@ -759,19 +762,13 @@ export function SettingsManager({ isOpen, onClose }: SettingsManagerProps) {
               </div>
 
               <div className="settings-field">
-                <label>Language</label>
+                <label>{t('language')}</label>
                 <select
-                  value={settings.system.language}
-                  onChange={e => updateSetting('system', { language: e.target.value })}
+                  value={language}
+                  onChange={e => setLanguage(e.target.value as Language)}
                 >
-                  <option value="Default">Default (English)</option>
-                  <option value="zh-CN">简体中文</option>
-                  <option value="zh-TW">繁體中文</option>
-                  <option value="ja">日本語</option>
-                  <option value="ko">한국어</option>
-                  <option value="es">Español</option>
-                  <option value="fr">Français</option>
-                  <option value="de">Deutsch</option>
+                  <option value="en">English</option>
+                  <option value="zh">中文</option>
                 </select>
               </div>
 

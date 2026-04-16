@@ -3,6 +3,7 @@ export interface Session {
   title: string
   createdAt: number
   lastActivityAt: number
+  workspacePath?: string
 }
 
 export interface Message {

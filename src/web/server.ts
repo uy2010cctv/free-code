@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { createServer as createViteServer } from 'vite'
 import { SessionManager, type StreamEvent } from './engine/index.js'
+import { readFile, writeFile, stat, readdir } from 'fs/promises'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -58,6 +59,153 @@ async function startServer() {
     res.json(session.messages)
   })
 
+  // Rewind session
+  app.post('/api/sessions/:id/rewind', (req: Request, res: Response) => {
+    const { id } = req.params
+    const { messageId } = req.body
+    if (!messageId) {
+      res.status(400).json({ error: 'messageId is required' })
+      return
+    }
+    const success = sessionManager.rewindConversationTo(id, messageId)
+    if (success) {
+      const session = sessionManager.getSession(id)
+      res.json({ success: true, messages: session?.messages || [] })
+    } else {
+      res.status(404).json({ error: 'Message not found' })
+    }
+  })
+
+  // Get selectable messages for rewind
+  app.get('/api/sessions/:id/rewind/messages', (req: Request, res: Response) => {
+    const { id } = req.params
+    const messages = sessionManager.getSelectableMessagesForRewind(id)
+    res.json(messages)
+  })
+
+  // Execute a skill directly
+  app.post('/api/sessions/:id/skill', async (req: Request, res: Response) => {
+    const { id } = req.params
+    const { skillName, args } = req.body
+
+    if (!skillName) {
+      res.status(400).json({ error: 'skillName is required' })
+      return
+    }
+
+    const engine = sessionManager.getEngine(id)
+    if (!engine) {
+      res.status(404).json({ error: 'Session not found' })
+      return
+    }
+
+    // Get the skill from session manager
+    const skill = sessionManager.findSkill(skillName)
+    if (!skill) {
+      res.status(404).json({ error: `Skill '${skillName}' not found` })
+      return
+    }
+
+    try {
+      // Execute the skill and return its prompt content
+      const result = await sessionManager.executeSkill(skillName, args || '')
+      res.json(result)
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to execute skill' })
+    }
+  })
+
+  // Get all available skills
+  app.get('/api/sessions/:id/skills', (req: Request, res: Response) => {
+    const { id } = req.params
+    const skills = sessionManager.getSkills()
+    res.json(skills.map(s => ({ name: s.name, description: s.description })))
+  })
+
+  // Session workspace file operations
+  app.get('/api/sessions/:id/workspace/files', async (req: Request, res: Response) => {
+    const { id } = req.params
+    const session = sessionManager.getSession(id)
+    if (!session || !session.workspacePath) {
+      res.status(404).json({ error: 'Session workspace not found' })
+      return
+    }
+    try {
+      const entries = await readdir(session.workspacePath, { withFileTypes: true })
+      const files = entries.map(entry => ({
+        name: entry.name,
+        path: join(session.workspacePath!, entry.name),
+        isDirectory: entry.isDirectory(),
+      }))
+      res.json(files)
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to list files' })
+    }
+  })
+
+  app.get('/api/sessions/:id/workspace/read', async (req: Request, res: Response) => {
+    const { id } = req.params
+    const { path: filePath } = req.query
+    const session = sessionManager.getSession(id)
+    if (!session || !session.workspacePath) {
+      res.status(404).json({ error: 'Session workspace not found' })
+      return
+    }
+    // Ensure the file is within workspace
+    const fullPath = join(session.workspacePath, String(filePath))
+    if (!fullPath.startsWith(session.workspacePath)) {
+      res.status(403).json({ error: 'Access denied' })
+      return
+    }
+    try {
+      const ext = String(filePath).toLowerCase().split('.').pop()
+      const isBinary = ['docx', 'xlsx', 'doc', 'xls', 'pdf', 'png', 'jpg', 'jpeg', 'gif'].includes(ext || '')
+
+      if (isBinary) {
+        const buffer = await readFile(fullPath)
+        const base64 = buffer.toString('base64')
+        res.json({ content: base64, encoding: 'base64', isBinary: true })
+      } else {
+        const content = await readFile(fullPath, 'utf-8')
+        res.json({ content, encoding: 'utf-8', isBinary: false })
+      }
+    } catch (error: any) {
+      res.status(404).json({ error: error.message || 'File not found' })
+    }
+  })
+
+  app.post('/api/sessions/:id/workspace/write', async (req: Request, res: Response) => {
+    const { id } = req.params
+    const { path: filePath, content } = req.body
+    const session = sessionManager.getSession(id)
+    if (!session || !session.workspacePath) {
+      res.status(404).json({ error: 'Session workspace not found' })
+      return
+    }
+    // Ensure the file is within workspace
+    const fullPath = join(session.workspacePath, String(filePath))
+    if (!fullPath.startsWith(session.workspacePath)) {
+      res.status(403).json({ error: 'Access denied' })
+      return
+    }
+    try {
+      await writeFile(fullPath, content, 'utf-8')
+      res.json({ success: true })
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to write file' })
+    }
+  })
+
+  app.get('/api/sessions/:id/workspace', (req: Request, res: Response) => {
+    const { id } = req.params
+    const session = sessionManager.getSession(id)
+    if (!session || !session.workspacePath) {
+      res.status(404).json({ error: 'Session workspace not found' })
+      return
+    }
+    res.json({ workspacePath: session.workspacePath })
+  })
+
   // Query (SSE streaming)
   app.post('/api/sessions/:id/query', async (req: Request, res: Response) => {
     const { id } = req.params
@@ -69,7 +217,8 @@ async function startServer() {
     }
 
     const engine = sessionManager.getEngine(id)
-    if (!engine) {
+    const session = sessionManager.getSession(id)
+    if (!engine || !session) {
       res.status(404).json({ error: 'Session not found' })
       return
     }
@@ -81,7 +230,7 @@ async function startServer() {
     activeQueryController = new AbortController()
 
     const context = {
-      cwd: process.cwd(),
+      cwd: session.workspacePath || process.cwd(),
       sessionId: id,
       signal: activeQueryController.signal,
     }
@@ -158,6 +307,82 @@ async function startServer() {
     // Get tool from engine
     // Note: Tool execution is handled within submitMessage for now
     res.status(400).json({ error: 'Use /query endpoint for tool execution' })
+  })
+
+  // File operations for workspace
+  app.get('/api/files/read', async (req: Request, res: Response) => {
+    const { path: filePath } = req.query
+    if (!filePath || typeof filePath !== 'string') {
+      res.status(400).json({ error: 'path is required' })
+      return
+    }
+    try {
+      const ext = filePath.toLowerCase().split('.').pop()
+      const isBinary = ['docx', 'xlsx', 'doc', 'xls', 'pdf', 'png', 'jpg', 'jpeg', 'gif'].includes(ext || '')
+
+      if (isBinary) {
+        // Read binary files as base64
+        const buffer = await readFile(filePath)
+        const base64 = buffer.toString('base64')
+        res.json({ content: base64, encoding: 'base64', isBinary: true })
+      } else {
+        // Text files as utf-8
+        const content = await readFile(filePath, 'utf-8')
+        res.json({ content, encoding: 'utf-8', isBinary: false })
+      }
+    } catch (error: any) {
+      res.status(404).json({ error: error.message || 'File not found' })
+    }
+  })
+
+  app.post('/api/files/write', async (req: Request, res: Response) => {
+    const { path: filePath, content } = req.body
+    if (!filePath || content === undefined) {
+      res.status(400).json({ error: 'path and content are required' })
+      return
+    }
+    try {
+      await writeFile(filePath, content, 'utf-8')
+      res.json({ success: true })
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to write file' })
+    }
+  })
+
+  app.get('/api/files/list', async (req: Request, res: Response) => {
+    const { path: dirPath } = req.query
+    const cwd = process.cwd()
+    const targetPath = dirPath && typeof dirPath === 'string' ? dirPath : cwd
+    try {
+      const entries = await readdir(targetPath, { withFileTypes: true })
+      const files = entries.map(entry => ({
+        name: entry.name,
+        path: join(targetPath, entry.name),
+        isDirectory: entry.isDirectory(),
+      }))
+      res.json(files)
+    } catch (error: any) {
+      res.status(404).json({ error: error.message || 'Directory not found' })
+    }
+  })
+
+  app.get('/api/files/stat', async (req: Request, res: Response) => {
+    const { path: filePath } = req.query
+    if (!filePath || typeof filePath !== 'string') {
+      res.status(400).json({ error: 'path is required' })
+      return
+    }
+    try {
+      const stats = await stat(filePath)
+      res.json({
+        isDirectory: stats.isDirectory(),
+        isFile: stats.isFile(),
+        size: stats.size,
+        mtime: stats.mtime,
+      })
+    } catch (error: any) {
+      res.status(404).json({ error: error.message || 'File not found' })
+    }
   })
 
   // Health check

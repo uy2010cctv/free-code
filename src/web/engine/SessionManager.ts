@@ -26,6 +26,9 @@ interface SessionData {
   lastActivityAt: number
   messages: Message[]
   workspacePath: string
+  selectedConnectorIds: string[]
+  selectedModuleIds: string[]
+  lastReportId?: string
 }
 
 export class SessionManager {
@@ -116,6 +119,9 @@ export class SessionManager {
       lastActivityAt: Date.now(),
       messages: [],
       workspacePath: resolve(this.cwd, 'workspace', id),
+      selectedConnectorIds: [],
+      selectedModuleIds: [],
+      lastReportId: undefined,
     }
     this.sessions.set(id, session)
 
@@ -207,12 +213,50 @@ Always be concise and helpful.`,
     }
   }
 
-  addMessage(sessionId: string, message: Message): void {
+addMessage(sessionId: string, message: Message): void {
     const session = this.sessions.get(sessionId)
     if (session) {
       session.messages.push(message)
       session.lastActivityAt = Date.now()
       this.saveSession(sessionId).catch(console.error)
+    }
+  }
+
+  setEnterpriseSessionState(
+    sessionId: string,
+    state: {
+      selectedConnectorIds?: string[]
+      selectedModuleIds?: string[]
+      lastReportId?: string
+    }
+  ): void {
+    const session = this.sessions.get(sessionId)
+    if (session) {
+      if (state.selectedConnectorIds !== undefined) {
+        session.selectedConnectorIds = state.selectedConnectorIds
+      }
+      if (state.selectedModuleIds !== undefined) {
+        session.selectedModuleIds = state.selectedModuleIds
+      }
+      if (state.lastReportId !== undefined) {
+        session.lastReportId = state.lastReportId
+      }
+      session.lastActivityAt = Date.now()
+      this.saveSession(sessionId).catch(console.error)
+    }
+  }
+
+  getEnterpriseSessionState(sessionId: string): {
+    selectedConnectorIds: string[]
+    selectedModuleIds: string[]
+    lastReportId?: string
+  } | undefined {
+    const session = this.sessions.get(sessionId)
+    if (!session) return undefined
+    return {
+      selectedConnectorIds: session.selectedConnectorIds,
+      selectedModuleIds: session.selectedModuleIds,
+      lastReportId: session.lastReportId,
     }
   }
 
@@ -316,6 +360,9 @@ Always be concise and helpful.`,
       lastActivityAt: data.lastActivityAt,
       messages: data.messages,
       workspacePath: data.workspacePath,
+      selectedConnectorIds: data.selectedConnectorIds,
+      selectedModuleIds: data.selectedModuleIds,
+      lastReportId: data.lastReportId,
     }
   }
 }

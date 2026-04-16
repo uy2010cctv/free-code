@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import hljs from 'highlight.js'
 import { AppWeb } from './AppWeb'
+import { I18nProvider } from './i18n'
 
 // Make hljs available globally
 window.hljs = hljs
@@ -14,6 +15,8 @@ if (!container) {
 const root = createRoot(container)
 root.render(
   <React.StrictMode>
-    <AppWeb />
+    <I18nProvider>
+      <AppWeb />
+    </I18nProvider>
   </React.StrictMode>
 )

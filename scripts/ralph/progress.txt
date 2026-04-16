@@ -1,0 +1,27 @@
+# Ralph Progress Log
+Started: 2026年 4月11日 星期六 10时45分36秒 CST
+---
+
+## Codebase Patterns
+- SessionManager stores sessions in `.free-code-sessions/` directory with `index.json` and individual `#{id}.json` files
+- Session interface is defined in `src/web/engine/types.ts`
+- SessionManager is initialized in `server.ts` and manages all session lifecycle
+- Enterprise session state fields (selectedConnectorIds, selectedModuleIds, lastReportId) are initialized as empty arrays/undefined in createSession()
+- Use `saveSession(sessionId)` to persist after any modification
+
+## 2026-04-16 1:25pm GMT+8 - US-001
+- What was implemented
+  - Added `selectedConnectorIds`, `selectedModuleIds`, and `lastReportId` fields to `SessionData` interface in SessionManager.ts
+  - Added same fields to `Session` interface in types.ts (as optional)
+  - New sessions initialize with empty arrays for connector/module IDs and undefined for lastReportId
+  - Added `setEnterpriseSessionState()` method to update enterprise session state
+  - Added `getEnterpriseSessionState()` method to retrieve enterprise session state
+  - Updated `toSession()` to include enterprise fields when converting from SessionData to Session
+- Files changed
+  - src/web/engine/types.ts
+  - src/web/engine/SessionManager.ts
+  - scripts/ralph/prd.json (marked US-001 as passes: true)
+- **Learnings for future iterations:**
+  - The SessionManager already persists to disk via saveSession() - any field added to SessionData is automatically persisted
+  - Always update the toSession() method when adding new fields to SessionData to ensure they are exposed via the public Session interface
+  - The loadSessions() method loads sessions from index.json on initialize, so existing sessions on disk will need migration or default values for new fields

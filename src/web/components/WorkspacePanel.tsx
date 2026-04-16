@@ -14,6 +14,7 @@ interface WorkspacePanelProps {
   hasUnsavedChanges: boolean
   fileTree: Array<{ name: string; path: string; isDirectory: boolean }>
   onFileSelect: (path: string) => void
+  activeSessionId?: string | null
 }
 
 type TabType = 'editor' | 'files' | 'preview'
@@ -28,14 +29,22 @@ export function WorkspacePanel({
   hasUnsavedChanges,
   fileTree,
   onFileSelect,
+  activeSessionId,
 }: WorkspacePanelProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<TabType>('editor')
   const [previewKey, setPreviewKey] = useState(0) // Force re-render of preview
 
-  // Reset preview when file changes
+  // Reset preview when file changes and auto-switch to preview tab for documents
   useEffect(() => {
     setPreviewKey(prev => prev + 1)
+    // Auto-switch to preview tab for Word/Excel files
+    if (currentFile) {
+      const ext = currentFile.toLowerCase().split('.').pop()
+      if (ext === 'docx' || ext === 'doc' || ext === 'xlsx' || ext === 'xls') {
+        setActiveTab('preview')
+      }
+    }
   }, [currentFile])
 
   if (!isOpen) return null
@@ -81,33 +90,41 @@ export function WorkspacePanel({
         {activeTab === 'editor' && (
           <div className="editor-panel">
             {currentFile ? (
-              <>
-                <div className="editor-header">
-                  <span className="editor-filename">
-                    {currentFile}
-                    {hasUnsavedChanges && <span className="unsaved-indicator">•</span>}
-                  </span>
-                  <button className="editor-save-btn" onClick={onSave}>
-                    {t('save')}
-                  </button>
+              fileType !== 'other' ? (
+                <div className="editor-unsupported">
+                  <p>{fileType === 'word' ? '📄 Word' : '📊 Excel'} documents cannot be edited as text.</p>
+                  <p>Switch to the <strong>Preview</strong> tab to view this file.</p>
+                  <p>Use the AI agent to edit document content.</p>
                 </div>
-                <div className="editor-container">
-                  <Editor
-                    height="100%"
-                    defaultLanguage="typescript"
-                    value={fileContent}
-                    onChange={(value) => onContentChange(value || '')}
-                    theme="vs-dark"
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 13,
-                      lineNumbers: 'on',
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                  />
-                </div>
-              </>
+              ) : (
+                <>
+                  <div className="editor-header">
+                    <span className="editor-filename">
+                      {currentFile}
+                      {hasUnsavedChanges && <span className="unsaved-indicator">•</span>}
+                    </span>
+                    <button className="editor-save-btn" onClick={onSave}>
+                      {t('save')}
+                    </button>
+                  </div>
+                  <div className="editor-container">
+                    <Editor
+                      height="100%"
+                      defaultLanguage="typescript"
+                      value={fileContent}
+                      onChange={(value) => onContentChange(value || '')}
+                      theme="vs-dark"
+                      options={{
+                        minimap: { enabled: false },
+                        fontSize: 13,
+                        lineNumbers: 'on',
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                      }}
+                    />
+                  </div>
+                </>
+              )
             ) : (
               <div className="editor-empty">
                 <p>{t('selectFileToEdit')}</p>
@@ -143,10 +160,13 @@ export function WorkspacePanel({
               <DocxPreview
                 key={`docx-${previewKey}`}
                 filePath={currentFile}
+                sessionId={activeSessionId || undefined}
               />
             ) : fileType === 'excel' ? (
               <ExcelPreview
                 key={`xlsx-${previewKey}`}
+                filePath={currentFile}
+                sessionId={activeSessionId || undefined}
                 filePath={currentFile}
               />
             ) : fileContent ? (

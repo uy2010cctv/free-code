@@ -44,6 +44,10 @@ export interface Session {
   createdAt: number
   lastActivityAt: number
   messages: Message[]
+  workspacePath?: string
+  selectedConnectorIds?: string[]
+  selectedModuleIds?: string[]
+  lastReportId?: string
 }
 
 // WebQueryEngine config

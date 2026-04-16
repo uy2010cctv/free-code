@@ -4,6 +4,8 @@ import { MessageList } from './components/MessageList'
 import { PromptInput } from './components/PromptInput'
 import { CommandToolbar } from './components/CommandToolbar'
 import { CommandPalette } from './components/CommandPalette'
+import { MessageSelector } from './components/MessageSelector'
+import { WorkspacePanel } from './components/WorkspacePanel'
 import { SettingsManager } from './components/SettingsManager'
 import { useWebKeybindings } from './hooks/useWebKeybindings'
 import type { Session, Message, StreamEvent } from './types'
@@ -17,6 +19,13 @@ export function AppWeb() {
   const [error, setError] = useState<string | null>(null)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isMessageSelectorVisible, setIsMessageSelectorVisible] = useState(false)
+  const [selectableMessages, setSelectableMessages] = useState<Message[]>([])
+  const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false)
+  const [workspaceFile, setWorkspaceFile] = useState<string | null>(null)
+  const [workspaceContent, setWorkspaceContent] = useState('')
+  const [workspaceOriginalContent, setWorkspaceOriginalContent] = useState('')
+  const [workspaceFileTree, setWorkspaceFileTree] = useState<Array<{ name: string; path: string; isDirectory: boolean }>>([])
 
   const handleCancelRequest = useCallback(() => {
     if (!isLoading || !activeSessionId) return
@@ -38,6 +47,109 @@ export function AppWeb() {
   const handleCloseSettings = useCallback(() => {
     setIsSettingsOpen(false)
   }, [])
+
+  const openMessageSelector = useCallback(async () => {
+    if (!activeSessionId) return
+    try {
+      const res = await fetch(`/api/sessions/${activeSessionId}/rewind/messages`)
+      if (res.ok) {
+        const msgs = await res.json()
+        setSelectableMessages(msgs)
+        setIsMessageSelectorVisible(true)
+      }
+    } catch (err) {
+      console.error('Failed to load selectable messages:', err)
+    }
+  }, [activeSessionId])
+
+  const handleRewindSelect = useCallback(async (messageId: string) => {
+    if (!activeSessionId) return
+    try {
+      const res = await fetch(`/api/sessions/${activeSessionId}/rewind`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data.messages)
+      }
+    } catch (err) {
+      console.error('Failed to rewind:', err)
+    } finally {
+      setIsMessageSelectorVisible(false)
+    }
+  }, [activeSessionId])
+
+  const handleCloseMessageSelector = useCallback(() => {
+    setIsMessageSelectorVisible(false)
+  }, [])
+
+  async function handleWorkspaceFileSelect(path: string) {
+    if (!activeSessionId) return
+    try {
+      // Store the full path for preview components
+      setWorkspaceFile(path)
+
+      // For text files, read content via workspace endpoint
+      const ext = path.toLowerCase().split('.').pop()
+      const isBinary = ['docx', 'xlsx', 'doc', 'xls', 'pdf'].includes(ext || '')
+
+      if (isBinary) {
+        // Binary files don't need content loaded - preview components handle them
+        setWorkspaceContent('')
+        setWorkspaceOriginalContent('')
+      } else {
+        // Text files - read content
+        const fileName = path.split('/').pop() || path
+        const res = await fetch(`/api/sessions/${activeSessionId}/workspace/read?path=${encodeURIComponent(fileName)}`)
+        if (res.ok) {
+          const data = await res.json()
+          setWorkspaceContent(data.content)
+          setWorkspaceOriginalContent(data.content)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to read file:', err)
+    }
+  }
+
+  async function loadWorkspaceFileTree() {
+    if (!activeSessionId) return
+    try {
+      const res = await fetch(`/api/sessions/${activeSessionId}/workspace/files`)
+      if (res.ok) {
+        const files = await res.json()
+        setWorkspaceFileTree(files)
+      }
+    } catch (err) {
+      console.error('Failed to load file tree:', err)
+    }
+  }
+
+  const handleToggleWorkspace = useCallback(() => {
+    setIsWorkspaceOpen(prev => {
+      if (!prev && activeSessionId) {
+        // Loading file tree when opening
+        loadWorkspaceFileTree()
+      }
+      return !prev
+    })
+  }, [activeSessionId])
+
+  async function handleWorkspaceSave() {
+    if (!workspaceFile || !activeSessionId) return
+    try {
+      await fetch(`/api/sessions/${activeSessionId}/workspace/write`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: workspaceFile, content: workspaceContent }),
+      })
+      setWorkspaceOriginalContent(workspaceContent)
+    } catch (err) {
+      console.error('Failed to save file:', err)
+    }
+  }
 
   useWebKeybindings({
     onCancel: handleCancelRequest,
@@ -117,10 +229,13 @@ export function AppWeb() {
     }
   }
 
-  function handleExecuteCommand(command: string) {
+  async function handleExecuteCommand(command: string) {
     if (command.startsWith('/')) {
       // Handle slash commands
-      const cmd = command.slice(1).split(' ')[0]
+      const parts = command.slice(1).split(' ')
+      const cmd = parts[0]
+      const args = parts.slice(1).join(' ')
+
       if (cmd === 'clear') {
         setMessages([])
       } else if (cmd === 'plan') {
@@ -133,11 +248,43 @@ export function AppWeb() {
         handleSubmitQuery('Please show the uncommitted changes.')
       } else if (cmd === 'status') {
         handleSubmitQuery('Please show the current status.')
+      } else if (cmd === 'rewind' || cmd === 'checkpoint') {
+        openMessageSelector()
       } else {
-        handleSubmitQuery(`/${cmd}`)
+        // Try to execute as a skill
+        await executeSkill(cmd, args)
       }
     } else {
       handleSubmitQuery(command)
+    }
+  }
+
+  async function executeSkill(skillName: string, args: string) {
+    if (!activeSessionId) return
+    try {
+      const res = await fetch(`/api/sessions/${activeSessionId}/skill`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skillName, args }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          // Add skill output as assistant message
+          const assistantMessage: Message = {
+            id: crypto.randomUUID(),
+            type: 'assistant',
+            content: data.output || '(no output)',
+            timestamp: Date.now(),
+          }
+          setMessages(prev => [...prev, assistantMessage])
+        } else {
+          setError(data.error || 'Skill execution failed')
+        }
+      }
+    } catch (err) {
+      console.error('Failed to execute skill:', err)
+      setError('Failed to execute skill')
     }
   }
 
@@ -255,6 +402,18 @@ export function AppWeb() {
         break
 
       case 'done':
+        // Reload workspace after agent completes - may have created/edited files
+        loadWorkspaceFileTree()
+        // Auto-select first document if none selected and workspace has files
+        if (!workspaceFile && workspaceFileTree.length > 0) {
+          const firstDoc = workspaceFileTree.find(f =>
+            !f.isDirectory && ['docx', 'doc', 'xlsx', 'xls'].includes(f.name.toLowerCase().split('.').pop() || '')
+          )
+          if (firstDoc) {
+            handleWorkspaceFileSelect(firstDoc.path)
+            setIsWorkspaceOpen(true)
+          }
+        }
         break
     }
   }
@@ -273,6 +432,8 @@ export function AppWeb() {
           onOpenSettings={handleOpenSettings}
           onOpenCommandPalette={handleOpenCommandPalette}
           onExecuteCommand={handleExecuteCommand}
+          onToggleWorkspace={handleToggleWorkspace}
+          isWorkspaceOpen={isWorkspaceOpen}
         />
         {error && (
           <div className="error-banner">
@@ -300,6 +461,27 @@ export function AppWeb() {
       <SettingsManager
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
+      />
+
+      {isMessageSelectorVisible && (
+        <MessageSelector
+          messages={selectableMessages}
+          onSelect={handleRewindSelect}
+          onClose={handleCloseMessageSelector}
+        />
+      )}
+
+      <WorkspacePanel
+        isOpen={isWorkspaceOpen}
+        onClose={() => setIsWorkspaceOpen(false)}
+        currentFile={workspaceFile}
+        fileContent={workspaceContent}
+        onContentChange={setWorkspaceContent}
+        onSave={handleWorkspaceSave}
+        hasUnsavedChanges={workspaceContent !== workspaceOriginalContent}
+        fileTree={workspaceFileTree}
+        onFileSelect={handleWorkspaceFileSelect}
+        activeSessionId={activeSessionId}
       />
     </div>
   )

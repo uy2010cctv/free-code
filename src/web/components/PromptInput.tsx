@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react'
+import { useTranslation } from '../i18n'
 
 interface PromptInputProps {
   value: string
@@ -17,6 +18,7 @@ export function PromptInput({
   isLoading = false,
   onCancel,
 }: PromptInputProps) {
+  const { t } = useTranslation()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -56,10 +58,10 @@ export function PromptInput({
           onKeyDown={handleKeyDown}
           placeholder={
             disabled
-              ? 'Select or create a session to start...'
+              ? t('selectOrCreateSession')
               : isLoading
-                ? 'Processing...'
-                : 'Type a message (Enter to send, Shift+Enter for new line)'
+                ? t('processing')
+                : t('typeMessage')
           }
           disabled={disabled || isLoading}
           rows={1}
@@ -69,7 +71,7 @@ export function PromptInput({
             className="prompt-cancel-btn"
             onClick={handleCancel}
           >
-            Stop
+            {t('stop')}
           </button>
         ) : (
           <button
@@ -77,15 +79,15 @@ export function PromptInput({
             onClick={handleSubmit}
             disabled={disabled || !value.trim()}
           >
-            Send
+            {t('send')}
           </button>
         )}
       </div>
       <div className="prompt-shortcuts">
-        <span className="shortcut"><kbd>Enter</kbd> Send</span>
-        <span className="shortcut"><kbd>Shift</kbd>+<kbd>Enter</kbd> New line</span>
-        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>C</kbd> Cancel</span>
-        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>R</kbd> History</span>
+        <span className="shortcut"><kbd>Enter</kbd> {t('enterSend')}</span>
+        <span className="shortcut"><kbd>Shift</kbd>+<kbd>Enter</kbd> {t('newLine')}</span>
+        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>C</kbd> {t('cancelKey')}</span>
+        <span className="shortcut"><kbd>Ctrl</kbd>+<kbd>R</kbd> {t('history')}</span>
       </div>
     </div>
   )
