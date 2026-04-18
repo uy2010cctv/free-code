@@ -147,3 +147,23 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - ModuleManager shows module name, version, lifecycleState badge, and description in enterprise-row format
   - The modules panel is accessible via the AdminStudio tabs navigation (overview/sources/modules/reports)
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
+## 2026年 4月18日 星期六 23时58分00秒 CST - US-E12
+- What was implemented: Verified US-E12 is already fully implemented. ReportInspector component (src/web/components/ReportInspector.tsx:8-30) renders report summary (plan.summary), trace rows (plan.trace.map), and export formats (plan.exports.map). AppWeb.tsx:46 stores latestReportPlan state and passes it to WorkspacePanel at line 850. WorkspacePanel renders a "Report" tab (lines 89-96) that shows when latestReportPlan is set, and displays ReportInspector at line 195. The panel is visible in the workspace side-by-side with the chat transcript, not hiding it. All 21 tests pass, build succeeds.
+- Files changed: scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - US-E12 was already fully implemented by prior work - always check existing files before assuming implementation is needed
+  - ReportInspector shows in both MessageList (per-message via report_plan SSE events) and WorkspacePanel (latestReportPlan via dedicated tab)
+  - The WorkspacePanel 'report' tab only appears when latestReportPlan is truthy - conditional rendering prevents empty panel
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+  - Browser verification was not possible as dev-browser skill is not available (consistent with other stories in this sprint)
+
+## 2026年 4月19日 星期日 00时15分00秒 CST - US-E13
+- What was implemented: Verified API two-step confirmation already existed (server.ts requires confirm:true in request body). Moved UI confirmation from AppWeb.tsx publishModule to ModuleManager (Admin Studio UI). Added pendingPublishModuleId state and confirmation overlay dialog in ModuleManager.tsx. Publish button now sets pendingPublishModuleId instead of calling onPublishModule directly, then the dialog calls onPublishModule on confirm. AppWeb.tsx publishModule no longer shows window.confirm. Added CSS for enterprise-confirm-overlay and enterprise-confirm-dialog to main.css. Non-publish paths (module toggle, refresh) remain automatic.
+- Files changed: src/web/components/ModuleManager.tsx (added confirmation dialog state and overlay), src/web/AppWeb.tsx (removed window.confirm from publishModule), src/web/styles/main.css (added confirm dialog styles)
+- **Learnings for future iterations:**
+  - The API two-step confirmation (confirm:true in body) was already implemented - always check existing code before assuming it needs creation
+  - Confirmation dialogs can be added to shared components (ModuleManager) without breaking other callers, as long as the callback semantics remain the same
+  - AppWeb.tsx had a window.confirm that needed to be removed when moving confirmation to ModuleManager to avoid double confirmation
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---

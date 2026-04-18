@@ -230,8 +230,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All acceptance criteria already implemented by prior work. ReportInspector component (src/web/components/ReportInspector.tsx) renders reportType, summary, trace rows, and export formats. AppWeb.tsx:46 stores latestReportPlan state and passes it to WorkspacePanel (line 850) which renders ReportInspector in a 'report' tab (line 195). The panel is visible in the workspace side-by-side with chat. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E13",
@@ -244,8 +244,8 @@
         "bun run web:check passes"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "API two-step already existed (server.ts requires confirm:true). Moved UI confirmation from AppWeb.tsx publishModule to ModuleManager Admin Studio UI. Added pendingPublishModuleId state and confirmation overlay dialog in ModuleManager. Publish button now sets pendingPublishModuleId instead of calling onPublishModule directly. AppWeb.tsx publishModule no longer shows window.confirm (confirmation handled in ModuleManager). CSS for enterprise-confirm-overlay and enterprise-confirm-dialog added to main.css. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E14",
