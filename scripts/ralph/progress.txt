@@ -51,3 +51,20 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - Tool responses are added to history AFTER createCall returns, so they appear in subsequent createCalls
   - When task descriptions conflict with actual code behavior, trace through the code to verify
   - The test file at HEAD already has correct assertions - no code changes needed
+
+## 2026年 4月18日 星期六 03时45分00秒 CST - US-B5
+- What was implemented: Verified hasToolUse is correctly scoped inside the WebQueryEngine submitMessage loop. At line 160, `let hasToolUse = false` is declared inside the for loop body (line 133), so it is reset to false at the start of every iteration. No stale state issue exists - no code change needed.
+- Files changed: scripts/ralph/prd.json (US-B5 passes: true)
+- **Learnings for future iterations:**
+  - hasToolUse is a local variable inside the loop, auto-reset each iteration - the Architect concern was already addressed by the existing code structure
+  - Always read the actual current code state before assuming a bug exists - the prior investigation finding was correct
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
+## 2026年 4月18日 星期六 04时05分00秒 CST - US-E2
+- What was implemented: Verified that US-E2 is already fully implemented. DataSourceConnector type (types.ts:5-16) has all required fields (id, name, kind, description, capabilities, status, schemaHints, authType, compatibilityStatus). ConnectorRegistry (ConnectorRegistry.ts) has load, register, update, getAll, getByKind, getByIds methods. defaultConnectors.ts provides 3 seed connectors (workspace-files, sales-db-demo, crm-api-demo). Tests in connector-registry.test.ts cover registration and filtering. All 21 tests pass, build succeeds.
+- Files changed: scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - US-E2 was already fully implemented by prior work - always check existing files before assuming they need creation
+  - DataSourceConnector and ConnectorRegistry live in src/web/engine/connectors/
+  - The config field in DataSourceConnector uses Record<string, string> for driver/provider settings
+  - US-E3 (expose connector management APIs) depends on this existing registry

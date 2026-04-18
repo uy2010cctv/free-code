@@ -64,8 +64,8 @@
         "bun run web:check passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified: hasToolUse is declared with let hasToolUse = false at line 160 inside the for loop body (line 133). Each iteration gets a fresh variable - no stale state. No code change needed."
     },
     {
       "id": "US-E2",
@@ -79,8 +79,8 @@
         "Tests pass"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DataSourceConnector type exists with all required fields (id, name, kind, description, capabilities, status, schemaHints, authType, compatibilityStatus). ConnectorRegistry class has load, register, getAll, getByKind methods. defaultConnectors.ts provides seed data. bun run web:check passes. All 21 tests pass."
     },
     {
       "id": "US-E3",
