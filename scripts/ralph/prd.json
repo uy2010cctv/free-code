@@ -215,8 +215,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "US-E11 was already fully implemented by prior work. ModuleManager component (showing name, version, lifecycleState, description) exists at src/web/components/ModuleManager.tsx. AdminStudio integrates it via 'modules' tab (line 292). AppWeb.loadModules() fetches from GET /api/admin/modules (line 251). AdminStudio accessible via surface=admin URL param. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E12",
