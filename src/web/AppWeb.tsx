@@ -330,10 +330,6 @@ export function AppWeb() {
   }
 
   async function publishModule(moduleId: string) {
-    if (!window.confirm('Publish this module to the live enterprise agent environment?')) {
-      return
-    }
-
     const res = await adminFetch(`/api/admin/modules/${moduleId}/publish`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
