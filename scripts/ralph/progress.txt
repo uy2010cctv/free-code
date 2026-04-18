@@ -77,3 +77,11 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - `POST /api/admin/sessions/:id/connectors` exists at line 209 (requires admin auth), but `POST /api/sessions/:id/connectors` (no admin prefix) is what the acceptance criteria required
   - Always verify the exact path in acceptance criteria matches what's implemented - the `/admin` prefix makes a difference
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
+## 2026年 4月18日 星期六 05时00分00秒 CST - US-E4
+- What was implemented: Verified US-E4 is already fully implemented. BusinessModule type (types.ts:6-18) has all required fields: id, name, description, version, prompts, requiredConnectorKinds, reportTemplates, outputFormats, lifecycleState. ModuleRegistry class has load, refresh, getAll, getById, refreshById methods. defaultModules.ts provides 2 seed modules for local development. module-registry.test.ts has 2 passing tests covering refresh and publish lifecycle.
+- Files changed: scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - US-E4 was already implemented by prior work - always check existing files before assuming they need creation
+  - BusinessModule and ModuleRegistry live in src/web/engine/modules/
+  - Tests live in src/web/engine/__tests__/module-registry.test.ts
