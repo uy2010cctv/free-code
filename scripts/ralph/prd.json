@@ -301,8 +301,8 @@
         "bun run web:check passes with strict mode on"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Enabled strict:true in tsconfig.json. Fixed 11 web type errors: Message type missing 'type' field in WebQueryEngine.ts (lines 110, 284), server.ts (line 486); XLSX.XLSXStyle type replaced with Record<string,any>; !merges Range fixed to use XLSX.Range objects; ToolUseContext cast via unknown; HeadingLevel/AlignmentType type annotations removed; underline type fixed for docx IRunOptions. bun run web:check passes (21 tests, build). CLI errors in src/bridge, src/buddy, src/cli pre-existing and out of scope for web platform."
     },
     {
       "id": "US-N3",
