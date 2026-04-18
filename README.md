@@ -1,236 +1,244 @@
 # free-code
 
-**The free build of Claude Code.**
+`free-code` 现在包含两套运行形态：
 
-All telemetry stripped. All injected security-prompt guardrails removed. All experimental features unlocked. One binary, zero callbacks home.
+- `CLI`：终端里的 Claude Code 风格 agent
+- `Web`：面向企业场景的实时 Web Agent 工作台
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/paoloanzn/free-code/main/install.sh | bash
-```
+当前项目重点已经不只是 CLI，而是一个可在浏览器中运行的企业 Agent 平台：
 
-> Checks your system, installs Bun if needed, clones, builds with all features enabled, and puts `free-code` on your PATH. Then just `export ANTHROPIC_API_KEY="sk-ant-..."` and run `free-code`.
+- 用户可以通过聊天生成和编辑企业场景下的 `docx`、`xlsx` 和报表
+- 管理员可以管理数据源、模块和发布流程
+- 系统会把企业上下文接入到 Agent 运行时中
 
-<p align="center">
-  <img src="assets/screenshot.png" alt="free-code screenshot" width="800" />
-</p>
+## 系统概览
 
----
+### 1. Web 端
 
-## What is this
+Web 端位于 [src/web](/Users/kris/项目/Project_demo/evolution/free-code/src/web)，由两部分组成：
 
-This is a clean, buildable fork of Anthropic's [Claude Code](https://docs.anthropic.com/en/docs/claude-code) CLI -- the terminal-native AI coding agent. The upstream source became publicly available on March 31, 2026 through a source map exposure in the npm distribution.
+- 前端：React + Vite
+- 服务端：Express + Bun
 
-This fork applies three categories of changes on top of that snapshot:
+核心能力：
 
-### 1. Telemetry removed
+- 会话式聊天 Agent
+- 工作区文件浏览与编辑
+- 企业数据源管理
+- 企业模块创建、刷新、发布
+- 报表规划与 traceability
+- 管理员鉴权和 enterprise 数据持久化
 
-The upstream binary phones home through OpenTelemetry/gRPC, GrowthBook analytics, Sentry error reporting, and custom event logging. In this build:
+关键入口：
 
-- All outbound telemetry endpoints are dead-code-eliminated or stubbed
-- GrowthBook feature flag evaluation still works locally (needed for runtime feature gates) but does not report back
-- No crash reports, no usage analytics, no session fingerprinting
+- 前端入口：[src/web/main.tsx](/Users/kris/项目/Project_demo/evolution/free-code/src/web/main.tsx)
+- Web 应用壳：[src/web/AppWeb.tsx](/Users/kris/项目/Project_demo/evolution/free-code/src/web/AppWeb.tsx)
+- 服务端入口：[src/web/server.ts](/Users/kris/项目/Project_demo/evolution/free-code/src/web/server.ts)
 
-### 2. Security-prompt guardrails removed
+### 2. CLI
 
-Anthropic injects system-level instructions into every conversation that constrain Claude's behavior beyond what the model itself enforces. These include:
+CLI 入口仍然保留，适合终端环境下直接使用：
 
-- Hardcoded refusal patterns for certain categories of prompts
-- Injected "cyber risk" instruction blocks
-- Managed-settings security overlays pushed from Anthropic's servers
+- CLI 入口：[src/entrypoints/cli.tsx](/Users/kris/项目/Project_demo/evolution/free-code/src/entrypoints/cli.tsx)
 
-This build strips those injections. The model's own safety training still applies -- this just removes the extra layer of prompt-level restrictions that the CLI wraps around it.
+## 当前已实现的企业能力
 
-### 3. Experimental features enabled
+- 管理员创建和登录
+- connector 持久化
+- module 持久化
+- module 发布确认门
+- session enterprise metadata 持久化
+- 已发布模块进入用户运行时
+- 报表规划 trace
+- workspace 级文件读写保护
 
-Claude Code ships with dozens of feature flags gated behind `bun:bundle` compile-time switches. Most are disabled in the public npm release. This build unlocks all 45+ flags that compile cleanly, including:
+当前还不是完整 ERP/CRM 替代系统，也不是通用低代码平台。
 
-| Feature | What it does |
-|---|---|
-| `ULTRAPLAN` | Remote multi-agent planning on Claude Code web (Opus-class) |
-| `ULTRATHINK` | Deep thinking mode -- type "ultrathink" to boost reasoning effort |
-| `VOICE_MODE` | Push-to-talk voice input and dictation |
-| `AGENT_TRIGGERS` | Local cron/trigger tools for background automation |
-| `BRIDGE_MODE` | IDE remote-control bridge (VS Code, JetBrains) |
-| `TOKEN_BUDGET` | Token budget tracking and usage warnings |
-| `BUILTIN_EXPLORE_PLAN_AGENTS` | Built-in explore/plan agent presets |
-| `VERIFICATION_AGENT` | Verification agent for task validation |
-| `BASH_CLASSIFIER` | Classifier-assisted bash permission decisions |
-| `EXTRACT_MEMORIES` | Post-query automatic memory extraction |
-| `HISTORY_PICKER` | Interactive prompt history picker |
-| `MESSAGE_ACTIONS` | Message action entrypoints in the UI |
-| `QUICK_SEARCH` | Prompt quick-search |
-| `SHOT_STATS` | Shot-distribution stats |
-| `COMPACTION_REMINDERS` | Smart reminders around context compaction |
-| `CACHED_MICROCOMPACT` | Cached microcompact state through query flows |
+## 环境要求
 
-See [FEATURES.md](FEATURES.md) for the full audit of all 88 flags and their status.
+- [Bun](https://bun.sh) `>= 1.3.11`
+- macOS 或 Linux
+- 一个可用的 `ANTHROPIC_API_KEY`
 
----
-
-## Quick install
+安装依赖：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/paoloanzn/free-code/main/install.sh | bash
-```
-
-This will check your system, install Bun if needed, clone the repo, build the binary with all experimental features enabled, and symlink it as `free-code` on your PATH.
-
-After install, just run:
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-free-code
-```
-
----
-
-## Requirements
-
-- [Bun](https://bun.sh) >= 1.3.11
-- macOS or Linux (Windows via WSL)
-- An Anthropic API key (set `ANTHROPIC_API_KEY` in your environment)
-
-```bash
-# Install Bun if you don't have it
-curl -fsSL https://bun.sh/install | bash
-```
-
----
-
-## Build
-
-```bash
-# Clone the repo
-git clone https://github.com/paoloanzn/claude-code.git
-cd claude-code
-
-# Install dependencies
 bun install
+```
 
-# Standard build -- produces ./cli
+## 环境变量
+
+最少需要：
+
+```bash
+export ANTHROPIC_API_KEY="your-api-key"
+```
+
+可选：
+
+```bash
+export ANTHROPIC_BASE_URL="https://api.minimaxi.com/anthropic"
+export FREE_CODE_ADMIN_BOOTSTRAP_SECRET="your-bootstrap-secret"
+```
+
+说明：
+
+- `ANTHROPIC_API_KEY`：模型调用必需
+- `ANTHROPIC_BASE_URL`：可选，默认就是 `https://api.minimaxi.com/anthropic`
+- `FREE_CODE_ADMIN_BOOTSTRAP_SECRET`：推荐在首次启动 Web 管理后台前设置。这样首个管理员初始化时你能明确知道 bootstrap secret
+
+如果不设置 `FREE_CODE_ADMIN_BOOTSTRAP_SECRET`，系统会在首次启动时自动生成 bootstrap secret，并把哈希配置文件写到：
+
+- `.free-code-enterprise/admin-bootstrap.json`
+
+## 如何启动
+
+### 启动 Web 端
+
+在仓库根目录执行：
+
+```bash
+bun run web:dev
+```
+
+默认会启动：
+
+- Web 服务：`http://localhost:8080`
+
+这个服务已经集成了前端和后端开发模式，直接打开浏览器访问即可。
+
+### 首次初始化管理员
+
+启动 Web 服务后，打开 Settings 里的 `Enterprise` 标签页。
+
+首次初始化需要填 3 个字段：
+
+- `Admin username`
+- `Admin password`
+- `Bootstrap secret`
+
+创建成功后，系统会返回 admin session，后续 Enterprise 管理操作都需要这个登录态。
+
+### 启动 CLI
+
+直接从源码运行：
+
+```bash
+bun run dev
+```
+
+如果你想先编译再运行：
+
+```bash
 bun run build
-
-# Dev build -- dev version stamp, experimental GrowthBook key
-bun run build:dev
-
-# Dev build with ALL experimental features enabled -- produces ./cli-dev
-bun run build:dev:full
-
-# Compiled build (alternative output path) -- produces ./dist/cli
-bun run compile
-```
-
-### Build variants
-
-| Command | Output | Features | Notes |
-|---|---|---|---|
-| `bun run build` | `./cli` | `VOICE_MODE` only | Production-like binary |
-| `bun run build:dev` | `./cli-dev` | `VOICE_MODE` only | Dev version stamp |
-| `bun run build:dev:full` | `./cli-dev` | All 45+ experimental flags | The full unlock build |
-| `bun run compile` | `./dist/cli` | `VOICE_MODE` only | Alternative output directory |
-
-### Individual feature flags
-
-You can enable specific flags without the full bundle:
-
-```bash
-# Enable just ultraplan and ultrathink
-bun run ./scripts/build.ts --feature=ULTRAPLAN --feature=ULTRATHINK
-
-# Enable a specific flag on top of the dev build
-bun run ./scripts/build.ts --dev --feature=BRIDGE_MODE
-```
-
----
-
-## Run
-
-```bash
-# Run the built binary directly
 ./cli
+```
 
-# Or the dev binary
-./cli-dev
+## 常用命令
 
-# Or run from source without compiling (slower startup)
+```bash
+# CLI 开发模式
 bun run dev
 
-# Set your API key
-export ANTHROPIC_API_KEY="sk-ant-..."
+# Web 开发模式
+bun run web:dev
 
-# Or use Claude.ai OAuth
-./cli /login
+# Web 构建
+bun run web:build
+
+# Web 测试
+bun run web:test
+
+# Web 检查（测试 + 构建）
+bun run web:check
+
+# CLI 构建
+bun run build
 ```
 
-### Quick test
+## 目录说明
+
+```text
+src/
+  entrypoints/cli.tsx     CLI 入口
+  main.tsx                CLI 主装配
+  screens/REPL.tsx        CLI 交互主界面
+  commands.ts             CLI 命令注册
+  tools.ts                CLI 工具注册
+
+  web/
+    main.tsx              Web 前端入口
+    AppWeb.tsx            Web 主应用壳
+    server.ts             Web 服务端入口
+    components/           Web UI 组件
+    engine/               Web 会话、auth、connector、module、reporting
+```
+
+运行时会生成两个本地目录：
+
+- `.free-code-sessions`：会话和 workspace 状态
+- `.free-code-enterprise`：管理员鉴权和 enterprise 数据
+
+## 当前管理员相关接口
+
+管理员鉴权：
+
+- `GET /api/admin/auth/status`
+- `POST /api/admin/auth/setup`
+- `POST /api/admin/auth/login`
+- `POST /api/admin/auth/logout`
+
+企业管理：
+
+- `GET /api/admin/connectors`
+- `POST /api/admin/connectors`
+- `PUT /api/admin/connectors/:id`
+- `GET /api/admin/modules`
+- `POST /api/admin/modules`
+- `POST /api/admin/modules/:id/refresh`
+- `POST /api/admin/modules/:id/publish`
+
+用户侧报表：
+
+- `POST /api/sessions/:id/reports/plan`
+
+## 验证启动是否正常
+
+建议至少跑一次：
 
 ```bash
-# One-shot mode
-./cli -p "what files are in this directory?"
-
-# Interactive REPL (default)
-./cli
-
-# With specific model
-./cli --model claude-sonnet-4-6-20250514
+bun run web:check
 ```
 
----
+如果你只想验证服务能起来：
 
-## Project structure
-
-```
-scripts/
-  build.ts              # Build script with feature flag system
-
-src/
-  entrypoints/cli.tsx   # CLI entrypoint
-  commands.ts           # Command registry (slash commands)
-  tools.ts              # Tool registry (agent tools)
-  QueryEngine.ts        # LLM query engine
-  screens/REPL.tsx      # Main interactive UI
-
-  commands/             # /slash command implementations
-  tools/                # Agent tool implementations (Bash, Read, Edit, etc.)
-  components/           # Ink/React terminal UI components
-  hooks/                # React hooks
-  services/             # API client, MCP, OAuth, analytics
-  state/                # App state store
-  utils/                # Utilities
-  skills/               # Skill system
-  plugins/              # Plugin system
-  bridge/               # IDE bridge
-  voice/                # Voice input
-  tasks/                # Background task management
+```bash
+curl http://localhost:8080/api/health
 ```
 
----
+正常情况下会返回类似：
 
-## Tech stack
+```json
+{
+  "status": "ok"
+}
+```
 
-| | |
-|---|---|
-| Runtime | [Bun](https://bun.sh) |
-| Language | TypeScript |
-| Terminal UI | React + [Ink](https://github.com/vadimdemedes/ink) |
-| CLI parsing | [Commander.js](https://github.com/tj/commander.js) |
-| Schema validation | Zod v4 |
-| Code search | ripgrep (bundled) |
-| Protocols | MCP, LSP |
-| API | Anthropic Messages API |
+## 当前系统边界
 
----
+这个项目现在适合做：
 
-## IPFS Mirror
+- 企业文档和表格生成 Agent
+- 企业数据源接入后的报表与周报生成
+- 管理员自助构建 connector / module / publish 流程
 
-A full copy of this repository is permanently pinned on IPFS via Filecoin:
+这个项目现在还不适合直接当成：
 
-- **CID:** `bafybeiegvef3dt24n2znnnmzcud2vxat7y7rl5ikz7y7yoglxappim54bm`
-- **Gateway:** https://w3s.link/ipfs/bafybeiegvef3dt24n2znnnmzcud2vxat7y7rl5ikz7y7yoglxappim54bm
-
-If this repo gets taken down, the code lives on.
-
----
+- 完整 ERP
+- 完整 CRM
+- 通用低代码搭建平台
+- 多人协同编辑平台
 
 ## License
 
-The original Claude Code source is the property of Anthropic. This fork exists because the source was publicly exposed through their npm distribution. Use at your own discretion.
+项目来源于 Claude Code 源码快照的可构建 fork，请按你自己的使用场景自行评估合规和风险。

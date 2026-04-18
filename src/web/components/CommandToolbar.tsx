@@ -7,23 +7,52 @@ interface CommandToolbarProps {
   onExecuteCommand: (command: string) => void
   onToggleWorkspace: () => void
   isWorkspaceOpen?: boolean
+  activeSurface: 'workspace' | 'admin'
+  onSelectSurface: (surface: 'workspace' | 'admin') => void
 }
 
 const QUICK_COMMANDS = [
   { cmd: '/rewind', icon: '⏪' },
 ]
 
-export function CommandToolbar({ onOpenSettings, onOpenCommandPalette, onExecuteCommand, onToggleWorkspace, isWorkspaceOpen }: CommandToolbarProps) {
+export function CommandToolbar({
+  onOpenSettings,
+  onOpenCommandPalette,
+  onExecuteCommand,
+  onToggleWorkspace,
+  isWorkspaceOpen,
+  activeSurface,
+  onSelectSurface,
+}: CommandToolbarProps) {
   const { t } = useTranslation()
 
   return (
     <div className="command-toolbar">
+      <div className="surface-switcher" data-testid="surface-switcher">
+        <button
+          className={`toolbar-btn ${activeSurface === 'workspace' ? 'active' : ''}`}
+          data-testid="surface-workspace"
+          onClick={() => onSelectSurface('workspace')}
+        >
+          <span className="toolbar-icon">◧</span>
+          <span className="toolbar-label">Agent Workspace</span>
+        </button>
+        <button
+          className={`toolbar-btn ${activeSurface === 'admin' ? 'active' : ''}`}
+          data-testid="surface-admin"
+          onClick={() => onSelectSurface('admin')}
+        >
+          <span className="toolbar-icon">▦</span>
+          <span className="toolbar-label">Admin Studio</span>
+        </button>
+      </div>
+
+      <div className="toolbar-divider" />
+
       <button className="toolbar-btn" onClick={onOpenCommandPalette} title="Command Palette (Ctrl+K)">
         <span className="toolbar-icon">⌘</span>
         <span className="toolbar-label">{t('commands')}</span>
       </button>
-
-      <div className="toolbar-divider" />
 
       <div className="quick-commands">
         {QUICK_COMMANDS.map(({ cmd, icon }) => (

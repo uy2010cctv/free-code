@@ -1,7 +1,6 @@
-import { readFile, writeFile, mkdir } from 'fs/promises'
+import { readFile, writeFile, mkdir, rename } from 'fs/promises'
 import { resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import type { Session, Message } from './types'
 import { WebQueryEngine } from './WebQueryEngine'
 import { WebBashTool } from './tools/WebBashTool'
 import { WebReadFileTool } from './tools/WebReadFileTool'
@@ -12,44 +11,83 @@ import { WebFetchTool } from './tools/WebFetchTool'
 import { WebSkillTool } from './tools/WebSkillTool'
 import { WebWordTool } from './tools/WebWordTool'
 import { WebExcelTool } from './tools/WebExcelTool'
-import type { Command } from '../../../types/command'
+import { ConnectorRegistry } from './connectors/ConnectorRegistry'
+import { DEFAULT_CONNECTORS } from './connectors/defaultConnectors'
+import { ModuleRegistry } from './modules/ModuleRegistry'
+import { DEFAULT_MODULES } from './modules/defaultModules'
+import { ReportService } from './reporting/ReportService'
+import type { Command } from '../../types/command'
 import { getSkillDirCommands } from '../../skills/loadSkillsDir.ts'
 import { getBundledSkills } from '../../skills/bundledSkills.ts'
+import type {
+  BusinessModule,
+  DataSourceConnector,
+  EnterpriseRuntimeContext,
+  EnterpriseRuntimeSnapshot,
+  ReportPlan,
+  Session,
+  Message,
+} from './types'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+void __filename
+void dirname
 
 interface SessionData {
-  id: string
-  title: string
-  createdAt: number
-  lastActivityAt: number
-  messages: Message[]
-  workspacePath: string
-  selectedConnectorIds: string[]
-  selectedModuleIds: string[]
-  lastReportId?: string
+  id: Session['id']
+  title: Session['title']
+  createdAt: Session['createdAt']
+  lastActivityAt: Session['lastActivityAt']
+  messages: Session['messages']
+  workspacePath: Session['workspacePath']
+  selectedConnectorIds: Session['selectedConnectorIds']
+  selectedModuleIds: Session['selectedModuleIds']
+  lastReportId?: Session['lastReportId']
+  lastGeneratedOutputs: Session['lastGeneratedOutputs']
+}
+
+interface EnterpriseData {
+  connectors: DataSourceConnector[]
+  modules: BusinessModule[]
 }
 
 export class SessionManager {
   private sessions: Map<string, SessionData> = new Map()
   private engines: Map<string, WebQueryEngine> = new Map()
   private sessionsPath: string
+  private enterprisePath: string
+  private enterpriseDataPath: string
   private cwd: string
   private skills: Map<string, Command> = new Map()
+  private connectorRegistry = new ConnectorRegistry()
+  private moduleRegistry = new ModuleRegistry()
+  private reportService = new ReportService()
 
   constructor(cwd: string = process.cwd()) {
     this.cwd = cwd
     this.sessionsPath = resolve(cwd, '.free-code-sessions')
+    this.enterprisePath = resolve(cwd, '.free-code-enterprise')
+    this.enterpriseDataPath = resolve(this.enterprisePath, 'enterprise-data.json')
   }
 
   async initialize(): Promise<void> {
     try {
       await mkdir(this.sessionsPath, { recursive: true })
+      await mkdir(this.enterprisePath, { recursive: true })
       await this.loadSessions()
       await this.loadSkills()
+      await this.loadEnterpriseData()
+      this.ensureSessionEngines()
     } catch (error) {
       console.error('Failed to initialize session manager:', error)
+    }
+  }
+
+  private ensureSessionEngines(): void {
+    for (const session of this.sessions.values()) {
+      if (!this.engines.has(session.id)) {
+        this.engines.set(session.id, this.createEngine(session.id))
+      }
     }
   }
 
@@ -84,7 +122,7 @@ export class SessionManager {
       const sessions: SessionData[] = JSON.parse(data)
 
       for (const session of sessions) {
-        this.sessions.set(session.id, session)
+        this.sessions.set(session.id, this.normalizeSessionData(session))
       }
     } catch (error) {
       // No sessions file yet, that's ok
@@ -99,6 +137,35 @@ export class SessionManager {
     } catch (error) {
       console.error('Failed to save sessions:', error)
     }
+  }
+
+  private async loadEnterpriseData(): Promise<void> {
+    try {
+      const raw = await readFile(this.enterpriseDataPath, 'utf-8')
+      const parsed = JSON.parse(raw) as Partial<EnterpriseData>
+      await this.connectorRegistry.load(Array.isArray(parsed.connectors) ? parsed.connectors : DEFAULT_CONNECTORS)
+      await this.moduleRegistry.load(Array.isArray(parsed.modules) ? parsed.modules : DEFAULT_MODULES)
+    } catch (error: any) {
+      if (error?.code && error.code !== 'ENOENT') {
+        console.error('Failed to read persisted enterprise data, preserving on-disk file:', error)
+        await this.connectorRegistry.load(DEFAULT_CONNECTORS)
+        await this.moduleRegistry.load(DEFAULT_MODULES)
+        return
+      }
+      await this.connectorRegistry.load(DEFAULT_CONNECTORS)
+      await this.moduleRegistry.load(DEFAULT_MODULES)
+      await this.saveEnterpriseData()
+    }
+  }
+
+  private async saveEnterpriseData(): Promise<void> {
+    const data: EnterpriseData = {
+      connectors: this.connectorRegistry.getAll(),
+      modules: this.moduleRegistry.getAll(),
+    }
+    const tempPath = `${this.enterpriseDataPath}.tmp`
+    await writeFile(tempPath, JSON.stringify(data, null, 2))
+    await rename(tempPath, this.enterpriseDataPath)
   }
 
   private async saveSession(sessionId: string): Promise<void> {
@@ -122,6 +189,7 @@ export class SessionManager {
       selectedConnectorIds: [],
       selectedModuleIds: [],
       lastReportId: undefined,
+      lastGeneratedOutputs: [],
     }
     this.sessions.set(id, session)
 
@@ -213,7 +281,7 @@ Always be concise and helpful.`,
     }
   }
 
-addMessage(sessionId: string, message: Message): void {
+  addMessage(sessionId: string, message: Message): void {
     const session = this.sessions.get(sessionId)
     if (session) {
       session.messages.push(message)
@@ -222,14 +290,7 @@ addMessage(sessionId: string, message: Message): void {
     }
   }
 
-  setEnterpriseSessionState(
-    sessionId: string,
-    state: {
-      selectedConnectorIds?: string[]
-      selectedModuleIds?: string[]
-      lastReportId?: string
-    }
-  ): void {
+  setEnterpriseSessionState(sessionId: string, state: Partial<EnterpriseRuntimeSnapshot>): void {
     const session = this.sessions.get(sessionId)
     if (session) {
       if (state.selectedConnectorIds !== undefined) {
@@ -241,23 +302,108 @@ addMessage(sessionId: string, message: Message): void {
       if (state.lastReportId !== undefined) {
         session.lastReportId = state.lastReportId
       }
+      if (state.lastGeneratedOutputs !== undefined) {
+        session.lastGeneratedOutputs = state.lastGeneratedOutputs
+      }
       session.lastActivityAt = Date.now()
       this.saveSession(sessionId).catch(console.error)
     }
   }
 
-  getEnterpriseSessionState(sessionId: string): {
-    selectedConnectorIds: string[]
-    selectedModuleIds: string[]
-    lastReportId?: string
-  } | undefined {
+  getEnterpriseSessionState(sessionId: string): EnterpriseRuntimeSnapshot | undefined {
     const session = this.sessions.get(sessionId)
     if (!session) return undefined
     return {
       selectedConnectorIds: session.selectedConnectorIds,
       selectedModuleIds: session.selectedModuleIds,
       lastReportId: session.lastReportId,
+      lastGeneratedOutputs: session.lastGeneratedOutputs ?? [],
     }
+  }
+
+  getConnectors(): DataSourceConnector[] {
+    return this.connectorRegistry.getAll()
+  }
+
+  async registerConnector(connector: DataSourceConnector): Promise<void> {
+    this.connectorRegistry.register(connector)
+    await this.saveEnterpriseData()
+  }
+
+  async updateConnector(id: string, updates: Partial<DataSourceConnector>): Promise<DataSourceConnector | undefined> {
+    const connector = this.connectorRegistry.update(id, updates)
+    if (connector) {
+      await this.saveEnterpriseData()
+    }
+    return connector
+  }
+
+  getModules(): BusinessModule[] {
+    return this.moduleRegistry.getAll()
+  }
+
+  async refreshModules(modules: BusinessModule[]): Promise<void> {
+    await this.moduleRegistry.refresh(modules)
+    await this.saveEnterpriseData()
+  }
+
+  async saveModule(module: BusinessModule): Promise<BusinessModule> {
+    const saved = this.moduleRegistry.upsert(module)
+    await this.saveEnterpriseData()
+    return saved
+  }
+
+  async refreshModule(moduleId: string): Promise<BusinessModule | undefined> {
+    const refreshed = this.moduleRegistry.refreshById(moduleId)
+    if (refreshed) {
+      await this.saveEnterpriseData()
+    }
+    return refreshed
+  }
+
+  async publishModule(moduleId: string): Promise<BusinessModule | undefined> {
+    const published = this.moduleRegistry.publish(moduleId)
+    if (published) {
+      await this.saveEnterpriseData()
+    }
+    return published
+  }
+
+  getEnterpriseRuntimeContext(sessionId: string): EnterpriseRuntimeContext {
+    const session = this.sessions.get(sessionId)
+    if (!session) {
+      return { connectors: [], selectedModules: [], publishedModules: [] }
+    }
+
+    const selectedConnectorIds = Array.isArray(session.selectedConnectorIds) ? session.selectedConnectorIds : []
+    const selectedModuleIds = Array.isArray(session.selectedModuleIds) ? session.selectedModuleIds : []
+
+    return {
+      connectors: this.connectorRegistry.getByIds(selectedConnectorIds),
+      selectedModules: this.moduleRegistry.getByIds(selectedModuleIds),
+      publishedModules: this.moduleRegistry.getPublishedByIds(selectedModuleIds),
+    }
+  }
+
+  async buildReportPlan(
+    sessionId: string,
+    prompt: string,
+    reportType = 'business-report',
+  ): Promise<ReportPlan> {
+    const runtime = this.getEnterpriseRuntimeContext(sessionId)
+    const plan = await this.reportService.buildPlan({
+      reportType,
+      connectors: runtime.connectors,
+      modules: runtime.publishedModules,
+      prompt,
+    })
+
+    this.setEnterpriseSessionState(sessionId, {
+      lastReportId: `${reportType}-${Date.now()}`,
+      lastGeneratedOutputs: plan.exports,
+    })
+
+    return plan
   }
 
   rewindConversationTo(sessionId: string, messageId: string): boolean {
@@ -353,6 +499,23 @@ addMessage(sessionId: string, message: Message): void {
   }
 
   private toSession(data: SessionData): Session {
+    const normalized = this.normalizeSessionData(data)
+
+    return {
+      id: normalized.id,
+      title: normalized.title,
+      createdAt: normalized.createdAt,
+      lastActivityAt: normalized.lastActivityAt,
+      messages: normalized.messages,
+      workspacePath: normalized.workspacePath,
+      selectedConnectorIds: normalized.selectedConnectorIds,
+      selectedModuleIds: normalized.selectedModuleIds,
+      lastReportId: normalized.lastReportId,
+      lastGeneratedOutputs: normalized.lastGeneratedOutputs,
+    }
+  }
+
+  private normalizeSessionData(data: Partial<SessionData> & Pick<SessionData, 'id' | 'title' | 'createdAt' | 'lastActivityAt' | 'messages' | 'workspacePath'>): SessionData {
     return {
       id: data.id,
       title: data.title,
@@ -360,9 +523,10 @@ addMessage(sessionId: string, message: Message): void {
       lastActivityAt: data.lastActivityAt,
       messages: data.messages,
       workspacePath: data.workspacePath,
-      selectedConnectorIds: data.selectedConnectorIds,
-      selectedModuleIds: data.selectedModuleIds,
+      selectedConnectorIds: Array.isArray(data.selectedConnectorIds) ? data.selectedConnectorIds : [],
+      selectedModuleIds: Array.isArray(data.selectedModuleIds) ? data.selectedModuleIds : [],
       lastReportId: data.lastReportId,
+      lastGeneratedOutputs: Array.isArray(data.lastGeneratedOutputs) ? data.lastGeneratedOutputs : [],
     }
   }
 }

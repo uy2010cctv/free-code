@@ -274,6 +274,146 @@
       "priority": 19,
       "passes": true,
       "notes": "Both scripts already existed. web:test runs bun test src/web/engine/__tests__ (21 passing tests). web:check runs web:test && web:build. All 21 tests pass, build succeeds."
+    },
+    {
+      "id": "US-N1",
+      "title": "Commit uncommitted enterprise files",
+      "description": "As a developer, I need all source files committed so the codebase is in a clean state and ready for review.",
+      "acceptanceCriteria": [
+        "All untracked/new files in src/web/components/ (AdminStudio.tsx, ReportInspector.tsx) are committed",
+        "All untracked/new files in src/web/engine/ (auth/, connectors/, modules/, reporting/, __tests__/) are committed",
+        "All untracked/new files in src/web/scenario/ and src/web/utils/ are committed",
+        "scripts/web-build-studio-scenario.ts and scripts/web-admin-visibility.ts are committed",
+        "No remaining uncommitted source files (exclude .json session data)",
+        "bun run web:check passes after commit"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "Committed 40 files (4594 insertions, 292 deletions). All enterprise components, engine registries, auth service, scenario harness, and docs now on branch. Excluded runtime data dirs (.free-code-enterprise, .free-code-sessions) and archive (scripts/ralph/archive)."
+    },
+    {
+      "id": "US-N2",
+      "title": "Add TypeScript strict mode and fix resulting errors",
+      "description": "As a developer, I need TypeScript strict mode enabled so type errors don't mask real bugs.",
+      "acceptanceCriteria": [
+        "tsconfig.json has strict: true enabled",
+        "All resulting type errors are fixed (no implicit any, no unsafe null checks)",
+        "bun run web:check passes with strict mode on"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N3",
+      "title": "Fix Vite build chunk size warning",
+      "description": "As a developer, I need the bundle properly split so the app loads efficiently in production.",
+      "acceptanceCriteria": [
+        "vite.config.ts has manualChunks configured to split vendor code",
+        "No chunk larger than 500KB after build (or chunkSizeWarningLimit is raised with justification)",
+        "bun run web:build succeeds with acceptable chunk sizes"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N4",
+      "title": "Run BUILD_STUDIO_20@v1 in shadow mode and fix failures",
+      "description": "As a developer, I need the BUILD_STUDIO_20 scenario to pass so the release gate is satisfied.",
+      "acceptanceCriteria": [
+        "bun run web:scenario --mode=shadow passes all 20 steps",
+        "Steps 4-9 (bash/read/write/skill tools) produce correct tool_use and tool_result events",
+        "Steps 10-15 (connector/module lifecycle) work end-to-end",
+        "Steps 19-20 (restart persistence) verify state survives server restart"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N5",
+      "title": "Set up GitHub Actions CI pipeline",
+      "description": "As a developer, I need CI to run so every PR is verified automatically.",
+      "acceptanceCriteria": [
+        ".github/workflows/ci.yml runs on push and PR",
+        "CI runs bun run web:check (test + build)",
+        "CI runs bun run web:scenario --mode=shadow as a smoke test",
+        "CI results are visible on the branch"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N6",
+      "title": "Add Playwright UI component tests",
+      "description": "As a developer, I need UI tests so component behavior is verified automatically.",
+      "acceptanceCriteria": [
+        "Playwright tests cover DataSourceManager component",
+        "Playwright tests cover ModuleManager component",
+        "Playwright tests cover Admin Studio navigation (surface switching)",
+        "bun test src/web/components/__tests__ passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N7",
+      "title": "Add API rate limiting middleware",
+      "description": "As a platform operator, I need rate limiting so the API is protected from abuse.",
+      "acceptanceCriteria": [
+        "Rate limiting on /api/sessions/:id/query endpoint (e.g., 60 req/min per session)",
+        "Rate limiting on /api/admin/* endpoints (e.g., 30 req/min per admin token)",
+        "429 Too Many Requests response when limit exceeded",
+        "Rate limit headers in response (X-RateLimit-Limit, X-RateLimit-Remaining)"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N8",
+      "title": "Add audit logging for admin operations",
+      "description": "As a platform operator, I need audit logs so admin actions are traceable.",
+      "acceptanceCriteria": [
+        "Admin operations (connector create/update, module publish, auth) are logged",
+        "Logs include timestamp, admin token hash, action, resource ID, and outcome",
+        "Logs are written to .free-code-enterprise/audit.log",
+        "Log format is machine-parseable (JSON)"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N9",
+      "title": "Run BUILD_STUDIO_20@v1 in primary mode and fix failures",
+      "description": "As a developer, I need the BUILD_STUDIO_20 scenario to pass in primary mode as the final release gate.",
+      "acceptanceCriteria": [
+        "bun run web:scenario --mode=primary passes all 20 steps",
+        "No source=legacy events in primary mode",
+        "Scenario passes on 3 clean restarts (restart count ≥ 3)"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-N10",
+      "title": "Final release readiness check",
+      "description": "As a team lead, I need a final review so we can merge to main with confidence.",
+      "acceptanceCriteria": [
+        "All 29 user stories have passes: true in prd.json",
+        "bun run web:check passes green",
+        "bun run web:scenario --mode=primary passes with no failures",
+        "PR to main is ready for review with all commits squashed meaningfully",
+        "README.md is updated to reflect the shipped enterprise platform capabilities"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
     }
   ]
 }

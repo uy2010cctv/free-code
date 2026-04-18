@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import type { Message } from '../types'
 import { CodeBlock } from './CodeBlock'
 import { ToolResultPanel } from './ToolResultPanel'
+import { ReportInspector } from './ReportInspector'
 
 interface MessageListProps {
   messages: Message[]
@@ -104,6 +105,10 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   }
 
   function renderMessage(msg: Message): React.ReactNode {
+    if (msg.type === 'report_plan' && msg.reportPlan) {
+      return <ReportInspector plan={msg.reportPlan} />
+    }
+
     if (msg.type === 'tool_result' && msg.toolResult) {
       return (
         <ToolResultPanel
@@ -124,12 +129,18 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
         return 'user'
       case 'assistant':
         return 'assistant'
-      case 'tool_use':
+      case 'tool_start':
         return msg.toolName || 'tool'
       case 'tool_result':
         return `${msg.toolName} result`
+      case 'tool_error':
+        return `${msg.toolName} error`
+      case 'state_update':
+        return 'runtime'
       case 'system':
         return 'system'
+      case 'report_plan':
+        return 'report plan'
       default:
         return msg.type
     }
@@ -141,12 +152,18 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
         return 'user'
       case 'assistant':
         return 'assistant'
-      case 'tool_use':
+      case 'tool_start':
         return 'tool'
       case 'tool_result':
         return msg.toolResult?.success ? 'tool-success' : 'tool-error'
+      case 'tool_error':
+        return 'tool-error'
+      case 'state_update':
+        return 'system'
       case 'system':
         return 'system'
+      case 'report_plan':
+        return 'assistant'
       default:
         return 'default'
     }

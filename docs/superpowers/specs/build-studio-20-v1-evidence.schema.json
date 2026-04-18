@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "build-studio-20-v1-evidence.schema.json",
+  "title": "BUILD_STUDIO_20@v1 Evidence",
+  "type": "object",
+  "required": [
+    "suite",
+    "mode",
+    "status",
+    "failure_code",
+    "steps",
+    "restart_count",
+    "log_dir"
+  ],
+  "properties": {
+    "suite": {
+      "const": "BUILD_STUDIO_20@v1"
+    },
+    "mode": {
+      "enum": ["shadow", "primary"]
+    },
+    "status": {
+      "enum": ["pass", "fail"]
+    },
+    "failure_code": {
+      "type": ["string", "null"],
+      "enum": [
+        "CRASH_PROCESS_EXIT",
+        "HANG_TIMEOUT",
+        "BLANK_RESULT",
+        "MISSING_REQUIRED_EVENT",
+        "STATE_CORRUPTION",
+        "STALE_STATE_AFTER_RESTART",
+        "MIXED_PATH_LEAK",
+        "VISIBILITY_MISMATCH",
+        null
+      ]
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "step_id",
+          "name",
+          "status",
+          "expected_event_count",
+          "actual_event_count",
+          "timeout_ms",
+          "source_path",
+          "state_assertions",
+          "visible_assertions"
+        ],
+        "properties": {
+          "step_id": { "type": "integer", "minimum": 1 },
+          "name": { "type": "string" },
+          "status": { "enum": ["pass", "fail"] },
+          "expected_event_count": { "type": "integer", "minimum": 0 },
+          "actual_event_count": { "type": "integer", "minimum": 0 },
+          "timeout_ms": { "type": "integer", "minimum": 1 },
+          "source_path": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "state_assertions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "visible_assertions": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "details": { "type": "string" }
+        }
+      }
+    },
+    "restart_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "log_dir": {
+      "type": "string"
+    }
+  }
+}

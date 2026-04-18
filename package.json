@@ -20,7 +20,10 @@
     "dev": "bun run ./src/entrypoints/cli.tsx",
     "web:dev": "bun run ./src/web/server.ts",
     "web:build": "cd src/web && bun run vite build",
-    "web:preview": "cd src/web && bun run vite preview"
+    "web:preview": "cd src/web && bun run vite preview",
+    "web:scenario": "bun run scripts/web-build-studio-scenario.ts",
+    "web:test": "bun test src/web/engine/__tests__",
+    "web:check": "bun run web:test && bun run web:build"
   },
   "dependencies": {
     "@alcalzone/ansi-tokenize": "^0.3.0",
@@ -135,6 +138,7 @@
     "@types/react-dom": "^18.2.0",
     "@types/react-window": "^1.8.8",
     "@vitejs/plugin-react": "^4.2.1",
+    "playwright": "^1.59.1",
     "react-dom": "^19.2.4",
     "react-window": "^1.8.10",
     "tailwindcss": "^4.0.0",

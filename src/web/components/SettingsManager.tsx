@@ -4,10 +4,47 @@ import { COMMANDS, getCommandsByCategory } from '../data/commands'
 import type { Command } from '../types/settings'
 import { useTranslation } from '../i18n'
 import type { Language } from '../i18n/translations'
+import type { BusinessModule, DataSourceConnector, ReportPlan } from '../types'
+import { AdminStudio } from './AdminStudio'
 
 interface SettingsManagerProps {
   isOpen: boolean
   onClose: () => void
+  connectors?: DataSourceConnector[]
+  modules?: BusinessModule[]
+  selectedConnectorIds?: string[]
+  selectedModuleIds?: string[]
+  latestReportPlan?: ReportPlan | null
+  onToggleConnector?: (id: string) => void
+  onToggleModule?: (id: string) => void
+  onPublishModule?: (id: string) => void
+  onCreateConnector?: (input: {
+    id: string
+    name: string
+    kind: DataSourceConnector['kind']
+    description: string
+    capabilities: string[]
+    schemaHints: string[]
+    authType: DataSourceConnector['authType']
+    status: DataSourceConnector['status']
+    compatibilityStatus: DataSourceConnector['compatibilityStatus']
+  }) => void
+  onCreateModule?: (input: {
+    id: string
+    name: string
+    description: string
+    prompts: string[]
+    requiredConnectorKinds: BusinessModule['requiredConnectorKinds']
+    reportTemplates: string[]
+    outputFormats: BusinessModule['outputFormats']
+  }) => void
+  onRefreshModule?: (id: string) => void
+  hasAdminAccount?: boolean
+  isAdminAuthenticated?: boolean
+  adminUsername?: string | null
+  onSetupAdmin?: (credentials: { username: string; password: string; bootstrapSecret: string }) => void
+  onLoginAdmin?: (credentials: { username: string; password: string }) => void
+  onLogoutAdmin?: () => void
 }
 
 const DEFAULT_SETTINGS: WebSettings = {
@@ -75,14 +112,33 @@ const DEFAULT_SETTINGS: WebSettings = {
   },
 }
 
-export function SettingsManager({ isOpen, onClose }: SettingsManagerProps) {
+export function SettingsManager({
+  isOpen,
+  onClose,
+  connectors = [],
+  modules = [],
+  selectedConnectorIds = [],
+  selectedModuleIds = [],
+  latestReportPlan = null,
+  onToggleConnector,
+  onToggleModule,
+  onPublishModule,
+  onCreateConnector,
+  onCreateModule,
+  onRefreshModule,
+  hasAdminAccount = false,
+  isAdminAuthenticated = false,
+  adminUsername = null,
+  onSetupAdmin,
+  onLoginAdmin,
+  onLogoutAdmin,
+}: SettingsManagerProps) {
   const { language, setLanguage, t } = useTranslation()
   const [settings, setSettings] = useState<WebSettings>(DEFAULT_SETTINGS)
-  const [activeTab, setActiveTab] = useState<'api' | 'permissions' | 'ui' | 'sessions' | 'commands' | 'system'>('api')
+  const [activeTab, setActiveTab] = useState<'api' | 'permissions' | 'ui' | 'sessions' | 'commands' | 'system' | 'enterprise'>('api')
   const [mcpServers, setMcpServers] = useState<McpServer[]>([])
   const [commandSearch, setCommandSearch] = useState('')
   const [expandedCategory, setExpandedCategory] = useState<string | null>('session')
-
   if (!isOpen) return null
 
   function updateSetting<K extends keyof WebSettings>(
@@ -158,6 +214,12 @@ export function SettingsManager({ isOpen, onClose }: SettingsManagerProps) {
             onClick={() => setActiveTab('system')}
           >
             System
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'enterprise' ? 'active' : ''}`}
+            onClick={() => setActiveTab('enterprise')}
+          >
+            Enterprise
           </button>
         </div>
 
@@ -248,6 +310,31 @@ export function SettingsManager({ isOpen, onClose }: SettingsManagerProps) {
                   <button onClick={addMcpServer} className="btn-secondary">+ Add MCP Server</button>
                 </div>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'enterprise' && (
+            <div className="settings-section enterprise-settings">
+              <AdminStudio
+                embedded={true}
+                connectors={connectors}
+                modules={modules}
+                selectedConnectorIds={selectedConnectorIds}
+                selectedModuleIds={selectedModuleIds}
+                latestReportPlan={latestReportPlan}
+                onToggleConnector={onToggleConnector || (() => {})}
+                onToggleModule={onToggleModule || (() => {})}
+                onPublishModule={onPublishModule}
+                onCreateConnector={onCreateConnector}
+                onCreateModule={onCreateModule}
+                onRefreshModule={onRefreshModule}
+                hasAdminAccount={hasAdminAccount}
+                isAdminAuthenticated={isAdminAuthenticated}
+                adminUsername={adminUsername}
+                onSetupAdmin={onSetupAdmin}
+                onLoginAdmin={onLoginAdmin}
+                onLogoutAdmin={onLogoutAdmin}
+              />
             </div>
           )}
 

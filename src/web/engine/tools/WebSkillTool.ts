@@ -1,12 +1,6 @@
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import { BaseTool } from '../Tool'
 import type { ToolContext, ToolResult } from '../types'
-import type { Command } from '../../../../types/command'
-import { substituteArguments } from '../../../../utils/argumentSubstitution'
-import { getSessionId } from '../../../../utils/session'
-
-const execAsync = promisify(exec)
+import type { Command } from '../../../types/command'
 
 export class WebSkillTool extends BaseTool {
   name = 'skill'
