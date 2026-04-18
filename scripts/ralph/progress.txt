@@ -197,3 +197,15 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - docs/superpowers/specs/ has BUILD_STUDIO_20 spec and runtime parity audit docs - worth committing
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
 ---
+
+## 2026年 4月19日 星期日 07时25分00秒 CST - US-N2
+- What was implemented: Enabled TypeScript strict mode in tsconfig.json. Fixed 11 strict-mode errors in web code: (1) WebQueryEngine.ts - added missing 'type' field to Message objects (userMsg, assistantMessage); (2) server.ts - added 'type' field in addMessage call; (3) WebExcelTool.ts - XLSX.XLSXStyle replaced with Record<string,any>, !merges fixed to use XLSX.Range objects; (4) WebSkillTool.ts - added ToolUseContext import from src/Tool.js, cast to unknown then ToolUseContext; (5) WebWordTool.ts - removed invalid type annotations for HeadingLevel/AlignmentType (these are values not types), fixed underline to be {} instead of boolean for docx IRunOptions. Note: CLI errors in src/bridge, src/buddy, src/cli are pre-existing and out of scope for the web platform.
+- Files changed: tsconfig.json, src/web/engine/WebQueryEngine.ts, src/web/engine/tools/WebExcelTool.ts, src/web/engine/tools/WebSkillTool.ts, src/web/engine/tools/WebWordTool.ts, src/web/server.ts
+- **Learnings for future iterations:**
+  - Message type requires 'type' field (not just role) - always include both when constructing Message objects
+  - XLSX.XLSXStyle does not exist in xlsx types - use Record<string,any> for style objects
+  - docx TextRun underline expects {color?: string; type?: UnderlineType} not boolean
+  - HeadingLevel and AlignmentType from docx are values (enums), not types - remove return type annotations
+  - ToolUseContext from src/Tool.js is very complex - use 'as unknown as ToolUseContext' cast for minimal contexts
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
