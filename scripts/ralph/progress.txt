@@ -86,6 +86,15 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - BusinessModule and ModuleRegistry live in src/web/engine/modules/
   - Tests live in src/web/engine/__tests__/module-registry.test.ts
 
+## 2026年 4月18日 星期六 22时35分00秒 CST - US-E6
+- What was implemented: Verified US-E6 is already fully implemented. ReportTraceItem type (reporting/types.ts:3-8) has all required fields (sourceType, sourceId, label, detail). ReportService.buildPlan (reporting/ReportService.ts:7-39) returns reportType, summary, exports, trace. Exports fallback includes docx and xlsx ('docx', 'xlsx', 'report'). report-service.test.ts covers the buildPlan method. All 21 tests pass, build succeeds.
+- Files changed: scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - US-E6 was already fully implemented by prior work - always check existing files before assuming they need creation
+  - ReportTraceItem and ReportService live in src/web/engine/reporting/
+  - DEFAULT_REPORT_TEMPLATES provides template metadata (label, exports) used by buildPlan to enhance summary text
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
 ## 2026年 4月18日 星期六 22时02分44秒 CST - US-E5
 - What was implemented: Verified US-E5 is already fully implemented. All acceptance criteria met: GET /api/admin/modules (server.ts:224) returns active module list, POST /api/admin/modules/refresh (server.ts:248) replaces active module list from request body, POST /api/admin/modules/:id/refresh (server.ts:255) refreshes a single module, SessionManager.getModules() (SessionManager.ts:341) and refreshModules() (SessionManager.ts:345) helpers exist. All 21 tests pass, build succeeds.
 - Files changed: scripts/ralph/prd.json (passes: true)
