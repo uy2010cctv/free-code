@@ -1,93 +1,81 @@
 {
-  "project": "free-code Enterprise Web",
+  "project": "free-code Enterprise Web Agent Platform",
   "branchName": "ralph/enterprise-web-agent-platform",
-  "description": "Build an enterprise web agent workspace that can manage business sessions, attach enterprise data sources, hot-load business modules, and generate traceable reports alongside docx/xlsx workflows.",
+  "description": "Fix all known architect-review bugs, complete Web Agent Remediation S1-S7, deliver Enterprise Platform Story 1-7, pass BUILD_STUDIO_20@v1",
   "userStories": [
     {
-      "id": "US-001",
-      "title": "Persist enterprise session metadata",
-      "description": "As a system, I need each web session to persist selected connector IDs, selected module IDs, and the last report ID so enterprise context survives refresh and resume.",
+      "id": "US-B1",
+      "title": "Fix Message type incompatibility",
+      "description": "As a developer, I need the Message type unified between web and engine layers so type errors don't mask real bugs.",
       "acceptanceCriteria": [
-        "Session data includes selectedConnectorIds, selectedModuleIds, and optional lastReportId fields",
-        "SessionManager persists those fields to disk and restores them on initialize",
-        "SessionManager exposes a setter for updating enterprise session state",
-        "Typecheck passes",
-        "Tests pass"
+        "src/web/types.ts and src/web/engine/types.ts have compatible Message definitions",
+        "reportPlan field exists in engine types when type === 'report_plan'",
+        "bun run web:check passes with no type errors"
       ],
       "priority": 1,
       "passes": true,
       "notes": ""
     },
     {
-      "id": "US-002",
-      "title": "Add connector type contracts and registry",
-      "description": "As a developer, I need a connector registry with explicit types so file, database, and external enterprise data sources can be registered uniformly.",
+      "id": "US-B2",
+      "title": "Remove dead withAdminQuery function",
+      "description": "As a developer, I want dead code removed so the codebase is maintainable.",
       "acceptanceCriteria": [
-        "Add DataSourceConnector type with id, name, kind, description, capabilities, status, and config",
-        "Add ConnectorRegistry with load, register, getAll, and getByKind methods",
-        "Provide a default connector seed file for local development",
-        "Typecheck passes",
-        "Tests pass"
+        "withAdminQuery is either removed or actually does path transformation",
+        "Code compiles and runs without the unused function",
+        "bun run web:check passes"
       ],
       "priority": 2,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-003",
-      "title": "Expose connector management APIs",
-      "description": "As the web app, I need API endpoints to list connectors and assign connectors to a session so the UI can manage enterprise data sources.",
+      "id": "US-B3",
+      "title": "Wire or remove latestReportPlan state",
+      "description": "As a user, I want report plan results visible in the UI so I can inspect what was generated.",
       "acceptanceCriteria": [
-        "GET /api/connectors returns the active connector list",
-        "POST /api/connectors registers a connector definition",
-        "POST /api/sessions/:id/connectors stores selected connector IDs on the session",
-        "API returns 404 for missing sessions instead of silently succeeding",
-        "Typecheck passes",
-        "Tests pass"
+        "latestReportPlan state is consumed in JSX (shown in ReportInspector) OR removed if not needed",
+        "If consumed: report plan visible after generation in the workspace",
+        "bun run web:check passes"
       ],
       "priority": 3,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-004",
-      "title": "Add business module contracts and registry",
-      "description": "As a developer, I need a business module registry so domain-specific capabilities can be loaded and refreshed without changing the core chat loop.",
+      "id": "US-B4",
+      "title": "Fix test assertion values",
+      "description": "As a developer, I need tests that reflect actual runtime behavior so CI catches real regressions.",
       "acceptanceCriteria": [
-        "Add BusinessModule type with id, name, description, version, prompts, and requiredConnectorKinds",
-        "Add ModuleRegistry with load, refresh, and getAll methods",
-        "Provide a default module seed file for local development",
-        "Typecheck passes",
-        "Tests pass"
+        "web-query-engine.test.ts assertions match actual code flow",
+        "bun run web:test passes"
       ],
       "priority": 4,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-005",
-      "title": "Expose module refresh APIs",
-      "description": "As a platform admin workflow, I need API endpoints to list and refresh business modules so new enterprise capabilities can be picked up without rebuilding the UI shell.",
+      "id": "US-B5",
+      "title": "Fix hasToolUse stale state in query loop",
+      "description": "As a user, I want tool use detection reliable so repeated tool invocations work correctly.",
       "acceptanceCriteria": [
-        "GET /api/modules returns the active module list",
-        "POST /api/modules/refresh replaces the active module list from request payload",
-        "SessionManager exposes getModules and refreshModules helpers used by the server",
-        "Typecheck passes",
-        "Tests pass"
+        "hasToolUse explicitly reset to false at loop entry or after processing each iteration",
+        "Repeated skill invocation in same session works correctly",
+        "bun run web:check passes"
       ],
       "priority": 5,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-006",
-      "title": "Add report trace types and planner service",
-      "description": "As a system, I need a report planning service that produces trace metadata so enterprise reports can explain where their numbers came from.",
+      "id": "US-E2",
+      "title": "Add connector type contracts and registry",
+      "description": "As a developer, I need a connector registry with explicit types so file, database, and external enterprise data sources can be registered uniformly.",
       "acceptanceCriteria": [
-        "Add ReportTraceItem type with sourceType, sourceId, label, and detail",
-        "Add ReportService.buildPlan that returns reportType, summary, exports, and trace items",
-        "Report plans include docx and xlsx in exports",
-        "Typecheck passes",
+        "Add DataSourceConnector type with id, name, kind, description, capabilities, status, schemaHints, authType, compatibilityStatus",
+        "Add ConnectorRegistry with load, register, getAll, and getByKind methods",
+        "Provide a default connector seed file for local development",
+        "bun run web:check passes",
         "Tests pass"
       ],
       "priority": 6,
@@ -95,14 +83,15 @@
       "notes": ""
     },
     {
-      "id": "US-007",
-      "title": "Expose report planning API",
-      "description": "As the web app, I need an API endpoint to request a report plan for a session so the frontend can inspect the report before or during generation.",
+      "id": "US-E3",
+      "title": "Expose connector management APIs",
+      "description": "As the web app, I need API endpoints to list connectors and assign connectors to a session so the UI can manage enterprise data sources.",
       "acceptanceCriteria": [
-        "POST /api/sessions/:id/reports/plan builds a report plan from the session enterprise context",
-        "The API response includes summary, exports, and trace arrays",
-        "Missing sessions return 404",
-        "Typecheck passes",
+        "GET /api/admin/connectors returns the active connector list",
+        "POST /api/admin/connectors registers a connector definition",
+        "POST /api/sessions/:id/connectors stores selected connector IDs on the session",
+        "API returns 404 for missing sessions",
+        "bun run web:check passes",
         "Tests pass"
       ],
       "priority": 7,
@@ -110,14 +99,14 @@
       "notes": ""
     },
     {
-      "id": "US-008",
-      "title": "Inject enterprise runtime context into WebQueryEngine",
-      "description": "As an agent runtime, I need active connector and module names in the system prompt so the model can reason about enterprise context when creating reports and documents.",
+      "id": "US-E4",
+      "title": "Add business module contracts and registry",
+      "description": "As a developer, I need a business module registry so domain-specific capabilities can be loaded and refreshed without changing the core chat loop.",
       "acceptanceCriteria": [
-        "WebQueryEngine exposes setRuntimeContext with connectorNames and moduleNames",
-        "The effective system prompt mentions active connectors and modules when present",
-        "server.ts applies the session runtime context before submitMessage",
-        "Typecheck passes",
+        "Add BusinessModule type with id, name, description, version, prompts, requiredConnectorKinds, reportTemplates, outputFormats, lifecycleState",
+        "Add ModuleRegistry with load, refresh, getAll, getById, refreshById methods",
+        "Provide a default module seed file for local development",
+        "bun run web:check passes",
         "Tests pass"
       ],
       "priority": 8,
@@ -125,77 +114,164 @@
       "notes": ""
     },
     {
-      "id": "US-009",
-      "title": "Render report plan events in the transcript",
-      "description": "As a business user, I want report trace cards in the chat transcript so I can understand the source and export options for generated reports.",
+      "id": "US-E5",
+      "title": "Expose module refresh APIs",
+      "description": "As a platform admin workflow, I need API endpoints to list and refresh business modules so new enterprise capabilities can be picked up without rebuilding the UI shell.",
       "acceptanceCriteria": [
-        "Frontend message types include a report_plan message shape",
-        "MessageList renders report plan messages with summary and trace details",
-        "AppWeb appends report_plan SSE events into message state",
-        "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "GET /api/admin/modules returns the active module list",
+        "POST /api/admin/modules/refresh replaces the active module list from request payload",
+        "POST /api/admin/modules/:id/refresh refreshes a single module",
+        "SessionManager exposes getModules and refreshModules helpers",
+        "bun run web:check passes",
+        "Tests pass"
       ],
       "priority": 9,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-010",
-      "title": "Add data source manager panel",
-      "description": "As a business user, I want to view and select enterprise data sources in the web UI so I can control which data the agent uses for a task.",
+      "id": "US-E6",
+      "title": "Add report trace types and planner service",
+      "description": "As a system, I need a report planning service that produces trace metadata so enterprise reports can explain where their numbers came from.",
       "acceptanceCriteria": [
-        "Add DataSourceManager component showing connector name, kind, and status",
-        "Settings or management UI can load connectors from GET /api/connectors",
-        "Selecting connectors updates the active session through POST /api/sessions/:id/connectors",
-        "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "Add ReportTraceItem type with sourceType, sourceId, label, detail",
+        "Add ReportService.buildPlan that returns reportType, summary, exports, trace items",
+        "Report plans include docx and xlsx in exports",
+        "bun run web:check passes",
+        "Tests pass"
       ],
       "priority": 10,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-011",
-      "title": "Add business module manager panel",
-      "description": "As a platform operator, I want to inspect active business modules in the UI so I can confirm what domain capabilities are available.",
+      "id": "US-E7",
+      "title": "Expose report planning API",
+      "description": "As the web app, I need an API endpoint to request a report plan for a session so the frontend can inspect the report before or during generation.",
       "acceptanceCriteria": [
-        "Add ModuleManager component showing module name, version, and description",
-        "UI loads modules from GET /api/modules",
-        "Module list is reachable from existing web management UI without breaking session chat flow",
-        "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "POST /api/sessions/:id/reports/plan builds a report plan from the session enterprise context",
+        "The API response includes summary, exports, and trace arrays",
+        "Missing sessions return 404",
+        "bun run web:check passes"
       ],
       "priority": 11,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-012",
-      "title": "Add report inspector panel",
-      "description": "As an operations or finance user, I want a dedicated report inspector panel so I can review report summary, trace details, and export formats outside the raw chat transcript.",
+      "id": "US-E8",
+      "title": "Inject enterprise runtime context into WebQueryEngine",
+      "description": "As an agent runtime, I need active connector and module names in the system prompt so the model can reason about enterprise context when creating reports and documents.",
       "acceptanceCriteria": [
-        "Add ReportInspector component that renders report summary, trace rows, and export formats",
-        "AppWeb stores the latest report plan and passes it to the inspector panel",
-        "The panel is visible from the web workspace without hiding the chat transcript",
-        "Typecheck passes",
-        "Verify in browser using dev-browser skill"
+        "WebQueryEngine exposes setRuntimeContext with connectorSummaries and moduleSummaries",
+        "The effective system prompt mentions active connectors and modules when present",
+        "server.ts applies the session runtime context before submitMessage",
+        "bun run web:check passes",
+        "Tests pass"
       ],
       "priority": 12,
       "passes": false,
       "notes": ""
     },
     {
-      "id": "US-013",
-      "title": "Add repeatable enterprise web verification scripts",
+      "id": "US-E9",
+      "title": "Render report plan events in the transcript",
+      "description": "As a business user, I want report trace cards in the chat transcript so I can understand the source and export options for generated reports.",
+      "acceptanceCriteria": [
+        "Frontend message types include a report_plan message shape",
+        "MessageList renders report plan messages with summary and trace details",
+        "AppWeb appends report_plan SSE events into message state",
+        "bun run web:check passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E10",
+      "title": "Add data source manager panel",
+      "description": "As a business user, I want to view and select enterprise data sources in the web UI so I can control which data the agent uses for a task.",
+      "acceptanceCriteria": [
+        "Add DataSourceManager component showing connector name, kind, and status",
+        "Settings or management UI can load connectors from GET /api/admin/connectors",
+        "Selecting connectors updates the active session through POST /api/sessions/:id/connectors",
+        "bun run web:check passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E11",
+      "title": "Add business module manager panel",
+      "description": "As a platform operator, I want to inspect active business modules in the UI so I can confirm what domain capabilities are available.",
+      "acceptanceCriteria": [
+        "Add ModuleManager component showing module name, version, lifecycleState, and description",
+        "UI loads modules from GET /api/admin/modules",
+        "Module list is reachable from existing web management UI without breaking session chat flow",
+        "bun run web:check passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E12",
+      "title": "Add report inspector panel",
+      "description": "As an operations or finance user, I want a dedicated report inspector panel so I can review report summary, trace details, and export formats outside the raw chat transcript.",
+      "acceptanceCriteria": [
+        "Add ReportInspector component that renders report summary, trace rows, and export formats",
+        "AppWeb stores the latest report plan and passes it to the inspector panel",
+        "The panel is visible from the web workspace without hiding the chat transcript",
+        "bun run web:check passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E13",
+      "title": "Add module publish confirmation gate",
+      "description": "As a platform, I need module publish to require explicit confirmation so administrators control when capabilities go live.",
+      "acceptanceCriteria": [
+        "Module publish requires explicit confirmation in API (two-step: intent + confirm)",
+        "Module publish requires explicit confirmation in Admin Studio UI",
+        "Non-publish generation paths remain automatic",
+        "bun run web:check passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E14",
+      "title": "Add Admin Studio primary navigation",
+      "description": "As a business user, I want Admin Studio as a first-class nav entry so enterprise features are visible, not hidden in settings.",
+      "acceptanceCriteria": [
+        "Admin Studio reachable from primary navigation (surface=admin URL param or nav entry)",
+        "Admin Studio shows Data Sources, Modules, and Publish Center as first-class views",
+        "Agent Workspace reachable from primary navigation for user-facing generation",
+        "bun run web:check passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-E15",
+      "title": "Add enterprise web verification scripts",
       "description": "As a developer, I need one command to run the web tests and build so Ralph iterations can verify enterprise changes before committing.",
       "acceptanceCriteria": [
         "package.json includes web:test script covering src/web tests",
         "package.json includes web:check script that runs web:test and web:build",
-        "The current branch passes bun run web:check after implementation",
-        "Typecheck passes",
-        "Tests pass"
+        "Current branch passes bun run web:check after implementation"
       ],
-      "priority": 13,
+      "priority": 19,
       "passes": false,
       "notes": ""
     }
