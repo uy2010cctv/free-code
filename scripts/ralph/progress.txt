@@ -167,3 +167,13 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - AppWeb.tsx had a window.confirm that needed to be removed when moving confirmation to ModuleManager to avoid double confirmation
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
 ---
+
+## 2026年 4月19日 星期日 00时45分00秒 CST - US-E14
+- What was implemented: Verified US-E14 is already fully implemented. Primary navigation via surface-switcher in CommandToolbar (lines 31-48) provides Agent Workspace and Admin Studio as two dedicated buttons. surface=admin URL param works (AppWeb.tsx:24). AdminStudio renders with tabs: overview, Data Sources, Modules, Reports (AdminStudio.tsx:288-305). activeSurface state toggles between workspace (MessageList+PromptInput) and admin (AdminStudio) surfaces (AppWeb.tsx:762-796). All 21 tests pass, build succeeds. dev-browser skill not available for browser verification.
+- Files changed: scripts/ralph/prd.json (US-E14 passes: true)
+- **Learnings for future iterations:**
+  - surface-switcher in CommandToolbar is the primary navigation element, NOT just settings - it provides first-class surface switching
+  - The surface URL param (surface=admin) provides direct navigation to Admin Studio without clicking
+  - AdminStudio has 'overview', 'sources', 'modules', 'reports' tabs - all are first-class views accessible from the tab bar
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
