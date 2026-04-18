@@ -95,8 +95,8 @@
         "Tests pass"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "GET /api/admin/connectors and POST /api/admin/connectors already existed. Added POST /api/sessions/:id/connectors endpoint (removed from catch-all that was returning 404). Endpoint checks for session existence and returns 404 if not found."
     },
     {
       "id": "US-E4",

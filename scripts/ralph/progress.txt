@@ -68,3 +68,12 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - DataSourceConnector and ConnectorRegistry live in src/web/engine/connectors/
   - The config field in DataSourceConnector uses Record<string, string> for driver/provider settings
   - US-E3 (expose connector management APIs) depends on this existing registry
+
+## 2026年 4月18日 星期六 04时50分00秒 CST - US-E3
+- What was implemented: Added `POST /api/sessions/:id/connectors` endpoint to store selected connector IDs on a session. The endpoint was previously returning 404 because it was in a catch-all block. Removed `/api/sessions/:id/connectors` from the catch-all that was returning "Enterprise management endpoints moved to /api/admin/*". The endpoint checks for session existence (returns 404 if not found) and uses `sessionManager.setEnterpriseSessionState` to persist the selected connector IDs.
+- Files changed: src/web/server.ts (added endpoint, removed from catch-all), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - The catch-all at `/api/*` paths returning 404 for enterprise endpoints is intentional - only implement endpoints that are explicitly in acceptance criteria
+  - `POST /api/admin/sessions/:id/connectors` exists at line 209 (requires admin auth), but `POST /api/sessions/:id/connectors` (no admin prefix) is what the acceptance criteria required
+  - Always verify the exact path in acceptance criteria matches what's implemented - the `/admin` prefix makes a difference
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
