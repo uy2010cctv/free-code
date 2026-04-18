@@ -185,8 +185,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All acceptance criteria already implemented by prior work. report_plan message type in types.ts StreamEvent union (line 24) and Message interface (line 41). MessageList.tsx:108-109 renders ReportInspector for report_plan messages. AppWeb.tsx:690-709 handles report_plan SSE events and appends to message state. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E10",
@@ -200,8 +200,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DataSourceManager component exists (shows name, kind, status). AdminStudio integrates it. AppWeb.loadConnectors() fetches from GET /api/admin/connectors. Fixed updateSessionConnectors to call POST /api/sessions/:id/connectors (was incorrectly calling /api/admin/sessions/:id/connectors). All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E11",

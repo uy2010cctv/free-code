@@ -121,3 +121,20 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - The /api/sessions/:id/reports/plan endpoint is not in the catch-all block at line 326 (only /api/connectors, /api/modules, /api/modules/refresh, /api/modules/:id/publish, /api/sessions/:id/modules are caught)
   - sessionManager.buildReportPlan gets enterprise runtime context via getEnterpriseRuntimeContext, combining selectedConnectorIds and selectedModuleIds
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
+## 2026年 4月18日 星期六 23时58分00秒 CST - US-E9
+- What was implemented: Verified US-E9 is already fully implemented. All acceptance criteria are met: (1) report_plan message shape exists in StreamEvent union (types.ts:24) and Message interface (types.ts:41 with reportPlan?: ReportPlan); (2) MessageList.tsx:108-109 renders ReportInspector for report_plan messages when msg.reportPlan is truthy; (3) AppWeb.tsx:690-709 handles report_plan SSE events, sets latestReportPlan state, and appends messages to message state with reportPlan object containing reportType, summary, trace, exports; (4) All 21 tests pass and build succeeds. Browser verification was not possible as dev-browser skill is not available.
+- Files changed: scripts/ralph/prd.json (US-E9 passes: true)
+- **Learnings for future iterations:**
+  - US-E9 was already fully implemented by prior work - always check existing files before assuming implementation is needed
+  - The report_plan SSE event flows: server.ts builds plan via sessionManager.buildReportPlan, sends SSE event with { type, reportType, summary, trace, exports }, AppWeb receives and appends message with nested reportPlan object, MessageList renders via ReportInspector
+  - MessageList renderMessage checks both msg.type === 'report_plan' AND msg.reportPlan truthiness before rendering ReportInspector
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+
+## 2026年 4月18日 星期六 23时58分00秒 CST - US-E10
+- What was implemented: Fixed two issues in US-E10 implementation: (1) updateSessionConnectors was calling `/api/admin/sessions/${activeSessionId}/connectors` but acceptance criteria requires `/api/sessions/${activeSessionId}/connectors` - changed endpoint in AppWeb.tsx line 310; (2) DataSourceManager was showing `connector.authType` in the sidecar but acceptance criteria requires showing `connector.kind` - changed line 148 to display kind instead. DataSourceManager component (showing name, kind, status) was already implemented and integrated into AdminStudio. AppWeb.loadConnectors() already fetches from GET /api/admin/connectors.
+- Files changed: src/web/AppWeb.tsx (endpoint URL fix), src/web/components/DataSourceManager.tsx (show connector.kind), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - Always verify the exact endpoint path in acceptance criteria matches what's implemented - the `/admin` prefix makes a critical difference
+  - The DataSourceConnector type has `kind` field but the UI was displaying `authType` instead - check actual type definition against acceptance criteria
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase

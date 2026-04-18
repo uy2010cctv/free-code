@@ -307,7 +307,7 @@ export function AppWeb() {
 
   async function updateSessionConnectors(connectorIds: string[]) {
     if (!activeSessionId) return
-    await adminFetch(`/api/admin/sessions/${activeSessionId}/connectors`, {
+    await adminFetch(`/api/sessions/${activeSessionId}/connectors`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ connectorIds }),
