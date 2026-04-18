@@ -135,7 +135,7 @@ export class WebWordTool extends BaseTool {
     }
   }
 
-  private parseHeading(heading?: string): HeadingLevel | undefined {
+  private parseHeading(heading?: string) {
     if (!heading) return undefined
     switch (heading.toLowerCase()) {
       case 'title': return HeadingLevel.TITLE
@@ -146,7 +146,7 @@ export class WebWordTool extends BaseTool {
     }
   }
 
-  private parseAlignment(alignment?: string): AlignmentType {
+  private parseAlignment(alignment?: string) {
     switch (alignment?.toLowerCase()) {
       case 'center': return AlignmentType.CENTER
       case 'right': return AlignmentType.RIGHT
@@ -156,21 +156,23 @@ export class WebWordTool extends BaseTool {
   }
 
   private createTextRun(text: string, format?: TextFormat): TextRun {
-    const textFormat: TextFormat = {
+    const textRunOptions: Record<string, any> = {
       bold: format?.bold ?? false,
-      italic: format?.italic ?? false,
-      underline: format?.underline ? {} : undefined,
+      italics: format?.italic ?? false,
       color: format?.color ?? '000000',
       size: format?.size ?? 24,
     }
-    return new TextRun(textFormat)
+    if (format?.underline) {
+      textRunOptions.underline = {}
+    }
+    return new TextRun(textRunOptions)
   }
 
   private contentToParagraphs(
     content: string,
     heading?: string,
     format?: TextFormat,
-    alignment?: AlignmentType
+    alignment?: string
   ): Paragraph[] {
     const paragraphs: Paragraph[] = []
     const headingLevel = this.parseHeading(heading)

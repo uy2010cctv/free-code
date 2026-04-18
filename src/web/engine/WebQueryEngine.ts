@@ -109,6 +109,7 @@ Always be concise and helpful.`
   ): AsyncGenerator<StreamEvent, void, unknown> {
     const userMsg: Message = {
       id: crypto.randomUUID(),
+      type: 'user',
       role: 'user',
       content: userMessage,
       timestamp: Date.now(),
@@ -283,6 +284,7 @@ Always be concise and helpful.`
           const assistantId = crypto.randomUUID()
           const assistantMessage: Message = {
             id: assistantId,
+            type: 'assistant',
             role: 'assistant',
             content: textResponse,
             timestamp: Date.now(),

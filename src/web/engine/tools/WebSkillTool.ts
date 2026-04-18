@@ -1,6 +1,7 @@
 import { BaseTool } from '../Tool'
 import type { ToolContext, ToolResult } from '../types'
 import type { Command } from '../../../types/command'
+import type { ToolUseContext } from '../../../../src/Tool.js'
 
 export class WebSkillTool extends BaseTool {
   name = 'skill'
@@ -52,33 +53,27 @@ export class WebSkillTool extends BaseTool {
 
     try {
       // Build minimal toolUseContext
-      const toolUseContext = {
+      const toolUseContext: ToolUseContext = {
         abortController: new AbortController(),
-        messages: [],
+        messages: [] as any[],
         options: {
-          commands: [],
+          commands: [] as any[],
           debug: false,
           mainLoopModel: '',
-          tools: {},
+          tools: {} as any,
           verbose: false,
-          thinkingConfig: { type: 'off' },
+          thinkingConfig: { type: 'disabled' as const },
           mcpClients: [],
           mcpResources: {},
           isNonInteractiveSession: false,
-          agentDefinitions: { agents: [] },
+          agentDefinitions: {} as any,
         },
         readFileState: {
           has: () => false,
           get: () => undefined,
-          set: () => {},
+          set: (_k: string, _v: any) => ({} as any),
         },
-        getAppState: () => ({
-          toolPermissionContext: {
-            mode: 'acceptEdits' as const,
-            alwaysAllowRules: { command: [] },
-          },
-          fileHistory: { canRestore: false },
-        }),
+        getAppState: () => ({}) as any,
         setAppState: () => {},
         setInProgressToolUseIDs: () => {},
         setResponseLength: () => {},
@@ -89,7 +84,7 @@ export class WebSkillTool extends BaseTool {
         dynamicSkillDirTriggers: new Set(),
         discoveredSkillNames: new Set(),
         userModified: false,
-      }
+      } as unknown as ToolUseContext
 
       const result = await command.getPromptForCommand(skillArgs, toolUseContext)
       const text = result

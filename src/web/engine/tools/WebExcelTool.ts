@@ -366,7 +366,7 @@ export class WebExcelTool extends BaseTool {
       }
 
       // Build style object for xlsx
-      const cellStyle: XLSX.XLSXStyle = {}
+      const cellStyle: Record<string, any> = {}
 
       if (style.font) {
         cellStyle.font = {}
@@ -463,8 +463,10 @@ export class WebExcelTool extends BaseTool {
       const worksheet = workbook.Sheets[sheetName]
 
       // Add merge range
-      worksheet['!merges'] = worksheet['!merges'] || []
-      worksheet['!merges'].push(`${merge.start}:${merge.end}`)
+      ;(worksheet['!merges'] as XLSX.Range[] || []).push({
+        s: XLSX.utils.decode_cell(merge.start),
+        e: XLSX.utils.decode_cell(merge.end),
+      })
 
       const outBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' })
       await writeFile(fullPath, outBuffer)

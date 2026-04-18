@@ -485,6 +485,7 @@ export async function createWebApp(cwd: string = process.cwd()) {
         if (event.type === 'user' || event.type === 'assistant') {
           sessionManager.addMessage(id, {
             id: event.id,
+            type: event.type,
             role: event.type,
             content: event.content,
             timestamp: event.timestamp,
