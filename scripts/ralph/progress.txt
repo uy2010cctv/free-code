@@ -33,3 +33,21 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - The engine/types.ts Message had `type` as optional and `role` as required, while web/types.ts had `type` required and `role` optional. This asymmetry caused the incompatibility.
   - The `reportPlan` field was missing from engine/types.ts but present in web/types.ts when type === 'report_plan'.
   - Always verify both type definitions when there are type compatibility issues between layers.
+
+## 2026年 4月18日 星期六 02时15分00秒 CST - US-B3
+- What was implemented: Wired `latestReportPlan` into the WorkspacePanel via a new "Report" tab. The tab conditionally renders when `latestReportPlan` is set, showing the `ReportInspector` component. This makes report plans visible in the workspace without hiding the chat transcript.
+- Files changed: src/web/components/WorkspacePanel.tsx (added report tab, ReportInspector import, latestReportPlan prop), src/web/AppWeb.tsx (pass latestReportPlan to WorkspacePanel)
+- **Learnings for future iterations:**
+  - WorkspacePanel uses a tabbed interface (editor/files/preview) - new tabs can be added conditionally
+  - ReportInspector is already used in MessageList for individual report_plan messages and in AdminStudio for the reports panel
+  - The Report tab button only appears when latestReportPlan is truthy
+---
+
+## 2026年 4月18日 星期六 03时10分00秒 CST - US-B4
+- What was implemented: Verified web-query-engine.test.ts assertion at lines 94-115 is already correct. Traced through WebQueryEngine.submitMessage code flow to confirm createCalls[2].messages has 5 messages (not 6 as the task description suggested). At the second submitMessage's first loop iteration, history contains: user(msg1), assistant(tool-1), user(tool_result), assistant(text), user(msg2). The tool-2 response comes AFTER createCalls[2] is made, so tool-2 is not yet in the messages array at that point. The existing test assertion of 5 messages is correct and all 21 tests pass.
+- Files changed: scripts/ralph/prd.json (US-B4 passes: true)
+- **Learnings for future iterations:**
+  - createCalls[n].messages reflects the history AT THE TIME of the API call, not after processing the response
+  - Tool responses are added to history AFTER createCall returns, so they appear in subsequent createCalls
+  - When task descriptions conflict with actual code behavior, trace through the code to verify
+  - The test file at HEAD already has correct assertions - no code changes needed

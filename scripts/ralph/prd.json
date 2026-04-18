@@ -39,8 +39,8 @@
         "bun run web:check passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wired latestReportPlan into WorkspacePanel via new 'Report' tab. ReportInspector shown when latestReportPlan is set."
     },
     {
       "id": "US-B4",
@@ -51,8 +51,8 @@
         "bun run web:test passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified via code trace that createCalls[2].messages has 5 messages (not 6 as task described). At second submitMessage's first loop iteration, history contains: user(msg1), assistant(tool-1), user(tool_result), assistant(text), user(msg2). Tool-2 is added to history AFTER createCalls[2] returns. Test assertion of 5 messages is correct and tests pass."
     },
     {
       "id": "US-B5",
