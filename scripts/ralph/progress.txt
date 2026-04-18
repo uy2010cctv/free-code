@@ -17,6 +17,15 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
 
 ---
 
+## 2026年 4月18日 星期六 01时35分00秒 CST - US-B2
+- What was implemented: Verified that `withAdminQuery` does not exist in the codebase - it was either never added or already removed. The `adminFetch` function at `AppWeb.tsx:52` is used directly at 8 call sites without any wrapper. No removal was necessary.
+- Files changed: scripts/ralph/prd.json (passes: true), scripts/ralph/progress.txt (appended)
+- **Learnings for future iterations:**
+  - Line numbers in task descriptions may be stale - always verify actual code state before attempting removal
+  - `adminFetch` is the live function, `withAdminQuery` was a planned but never-implemented wrapper
+  - `bun run web:check` (web:test + web:build) is the green-light gate for this codebase
+---
+
 ## 2026年 4月18日 星期六 01时10分00秒 CST - US-B1
 - What was implemented: Fixed Message type incompatibility by updating `src/web/engine/types.ts` to match `src/web/types.ts`. Made `type` required (not optional), added `reportPlan?: ReportPlan`, `toolResult?: ToolResult`, and made `role` optional - all matching the web/types.ts definition.
 - Files changed: src/web/engine/types.ts (Message interface), scripts/ralph/prd.json (passes: true), scripts/ralph/progress.txt (appended)

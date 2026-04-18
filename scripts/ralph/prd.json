@@ -26,8 +26,8 @@
         "bun run web:check passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "withAdminQuery does not exist in the codebase - no removal needed. adminFetch is used directly without any wrapper."
     },
     {
       "id": "US-B3",
