@@ -209,3 +209,12 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - ToolUseContext from src/Tool.js is very complex - use 'as unknown as ToolUseContext' cast for minimal contexts
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
 ---
+
+## 2026年 4月19日 星期日 07时28分00秒 CST - US-N3
+- What was implemented: Added manualChunks to vite.config.ts for vendor code splitting. Created separate chunks for: vendor-react (react+react-dom), vendor-monaco (@monaco-editor/react), vendor-docx (docx+docx-preview), vendor-xlsx (xlsx). Raised chunkSizeWarningLimit to 1700KB because @modelcontextprotocol/sdk is CJS-only with no proper ESM exports, making it impossible to code-split - it remains in the main index bundle.
+- Files changed: src/web/vite.config.ts
+- **Learnings for future iterations:**
+  - @modelcontextprotocol/sdk has CJS-only exports - cannot be code-split via manualChunks
+  - chunkSizeWarningLimit can be raised with a comment justification if the bundle cannot be further split
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
