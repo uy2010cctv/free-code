@@ -155,8 +155,8 @@
         "bun run web:check passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "POST /api/sessions/:id/reports/plan endpoint exists at server.ts:296. Calls sessionManager.buildReportPlan which uses reportService.buildPlan to return reportType, summary, exports (string[]), and trace (ReportTraceItem[]). Returns 404 for missing sessions. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-E8",
