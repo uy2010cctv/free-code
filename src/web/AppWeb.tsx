@@ -7,10 +7,25 @@ import { CommandPalette } from './components/CommandPalette'
 import { MessageSelector } from './components/MessageSelector'
 import { WorkspacePanel } from './components/WorkspacePanel'
 import { SettingsManager } from './components/SettingsManager'
+import { AdminStudio } from './components/AdminStudio'
 import { useWebKeybindings } from './hooks/useWebKeybindings'
-import type { Session, Message, StreamEvent } from './types'
+import { clearAdminToken, loadAdminToken, saveAdminToken } from './utils/adminSession'
+import type {
+  BusinessModule,
+  DataSourceConnector,
+  Message,
+  ReportPlan,
+  Session,
+  StreamEvent,
+} from './types'
 
 export function AppWeb() {
+  const initialUrl = typeof window !== 'undefined' ? new URL(window.location.href) : null
+  const initialSurface = initialUrl?.searchParams.get('surface') === 'admin' ? 'admin' : 'workspace'
+  const initialAdminPanel = (initialUrl?.searchParams.get('adminPanel') || 'overview') as 'overview' | 'sources' | 'modules' | 'reports'
+  const [adminToken, setAdminToken] = useState<string | null>(() => loadAdminToken())
+  const [hasAdminAccount, setHasAdminAccount] = useState(false)
+  const [adminUsername, setAdminUsername] = useState<string | null>(null)
   const [sessions, setSessions] = useState<Session[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -26,6 +41,24 @@ export function AppWeb() {
   const [workspaceContent, setWorkspaceContent] = useState('')
   const [workspaceOriginalContent, setWorkspaceOriginalContent] = useState('')
   const [workspaceFileTree, setWorkspaceFileTree] = useState<Array<{ name: string; path: string; isDirectory: boolean }>>([])
+  const [connectors, setConnectors] = useState<DataSourceConnector[]>([])
+  const [modules, setModules] = useState<BusinessModule[]>([])
+  const [latestReportPlan, setLatestReportPlan] = useState<ReportPlan | null>(null)
+  const [activeSurface, setActiveSurface] = useState<'workspace' | 'admin'>(initialSurface)
+  const [adminPanel, setAdminPanel] = useState<'overview' | 'sources' | 'modules' | 'reports'>(
+    ['overview', 'sources', 'modules', 'reports'].includes(initialAdminPanel) ? initialAdminPanel : 'overview',
+  )
+
+  function adminFetch(path: string, init?: RequestInit) {
+    const headers = new Headers(init?.headers)
+    if (adminToken) {
+      headers.set('x-admin-session', adminToken)
+    }
+    return fetch(path, {
+      ...init,
+      headers,
+    })
+  }
 
   const handleCancelRequest = useCallback(() => {
     if (!isLoading || !activeSessionId) return
@@ -158,13 +191,32 @@ export function AppWeb() {
 
   useEffect(() => {
     loadSessions()
-  }, [])
+    loadAdminStatus()
+    if (adminToken) {
+      loadConnectors()
+      loadModules()
+    } else {
+      setConnectors([])
+      setModules([])
+    }
+  }, [adminToken])
 
   useEffect(() => {
     if (activeSessionId) {
       loadSessionMessages(activeSessionId)
     }
   }, [activeSessionId])
+
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    url.searchParams.set('surface', activeSurface)
+    if (activeSurface === 'admin') {
+      url.searchParams.set('adminPanel', adminPanel)
+    } else {
+      url.searchParams.delete('adminPanel')
+    }
+    window.history.replaceState({}, '', url)
+  }, [activeSurface, adminPanel])
 
   async function loadSessions() {
     try {
@@ -178,6 +230,30 @@ export function AppWeb() {
       }
     } catch (err) {
       console.error('Failed to load sessions:', err)
+    }
+  }
+
+  async function loadConnectors() {
+    if (!adminToken) return
+    try {
+      const res = await adminFetch('/api/admin/connectors')
+      if (res.ok) {
+        setConnectors(await res.json())
+      }
+    } catch (err) {
+      console.error('Failed to load connectors:', err)
+    }
+  }
+
+  async function loadModules() {
+    if (!adminToken) return
+    try {
+      const res = await adminFetch('/api/admin/modules')
+      if (res.ok) {
+        setModules(await res.json())
+      }
+    } catch (err) {
+      console.error('Failed to load modules:', err)
     }
   }
 
@@ -227,6 +303,209 @@ export function AppWeb() {
     } catch (err) {
       console.error('Failed to delete session:', err)
     }
+  }
+
+  async function updateSessionConnectors(connectorIds: string[]) {
+    if (!activeSessionId) return
+    await adminFetch(`/api/admin/sessions/${activeSessionId}/connectors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ connectorIds }),
+    })
+    setSessions(prev => prev.map(session => (
+      session.id === activeSessionId ? { ...session, selectedConnectorIds: connectorIds } : session
+    )))
+  }
+
+  async function updateSessionModules(moduleIds: string[]) {
+    if (!activeSessionId) return
+    await adminFetch(`/api/admin/sessions/${activeSessionId}/modules`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ moduleIds }),
+    })
+    setSessions(prev => prev.map(session => (
+      session.id === activeSessionId ? { ...session, selectedModuleIds: moduleIds } : session
+    )))
+  }
+
+  async function publishModule(moduleId: string) {
+    if (!window.confirm('Publish this module to the live enterprise agent environment?')) {
+      return
+    }
+
+    const res = await adminFetch(`/api/admin/modules/${moduleId}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: true }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to publish module')
+    }
+
+    await loadModules()
+  }
+
+  async function createConnector(input: {
+    id: string
+    name: string
+    kind: DataSourceConnector['kind']
+    description: string
+    capabilities: string[]
+    schemaHints: string[]
+    authType: DataSourceConnector['authType']
+    status: DataSourceConnector['status']
+    compatibilityStatus: DataSourceConnector['compatibilityStatus']
+  }) {
+    if (!adminToken) throw new Error('Admin login required')
+    const res = await adminFetch('/api/admin/connectors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...input,
+        config: {},
+      }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to register connector')
+    }
+
+    await loadConnectors()
+  }
+
+  async function createModule(input: {
+    id: string
+    name: string
+    description: string
+    prompts: string[]
+    requiredConnectorKinds: BusinessModule['requiredConnectorKinds']
+    reportTemplates: string[]
+    outputFormats: BusinessModule['outputFormats']
+  }) {
+    if (!adminToken) throw new Error('Admin login required')
+    const res = await adminFetch('/api/admin/modules', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...input,
+      }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to save module')
+    }
+
+    await loadModules()
+  }
+
+  async function refreshModule(moduleId: string) {
+    if (!adminToken) throw new Error('Admin login required')
+    const res = await adminFetch(`/api/admin/modules/${moduleId}/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.error || 'Failed to refresh module')
+    }
+
+    await loadModules()
+  }
+
+  async function loadAdminStatus() {
+    try {
+      const headers = new Headers()
+      if (adminToken) {
+        headers.set('x-admin-session', adminToken)
+      }
+      const res = await fetch('/api/admin/auth/status', { headers })
+      if (!res.ok) return
+      const data = await res.json()
+      setHasAdminAccount(Boolean(data.hasAdminAccount))
+      setAdminUsername(data.username || null)
+      if (!data.isAuthenticated && adminToken) {
+        setAdminToken(null)
+        clearAdminToken()
+        setConnectors([])
+        setModules([])
+      }
+    } catch (err) {
+      console.error('Failed to load admin status:', err)
+    }
+  }
+
+  async function setupAdmin(credentials: { username: string; password: string; bootstrapSecret: string }) {
+    const res = await fetch('/api/admin/auth/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to create admin account')
+    }
+    setAdminToken(data.token)
+    setHasAdminAccount(true)
+    setAdminUsername(data.username || credentials.username)
+    saveAdminToken(data.token)
+    await loadConnectors()
+    await loadModules()
+  }
+
+  async function loginAdmin(credentials: { username: string; password: string }) {
+    const res = await fetch('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to login')
+    }
+    setAdminToken(data.token)
+    setHasAdminAccount(true)
+    setAdminUsername(data.username || credentials.username)
+    saveAdminToken(data.token)
+    await loadConnectors()
+    await loadModules()
+  }
+
+  async function logoutAdmin() {
+    if (adminToken) {
+      await fetch('/api/admin/auth/logout', {
+        method: 'POST',
+        headers: { 'x-admin-session': adminToken },
+      }).catch(() => {})
+    }
+    setAdminToken(null)
+    setAdminUsername(null)
+    setConnectors([])
+    setModules([])
+    clearAdminToken()
+  }
+
+  function toggleConnector(id: string) {
+    const active = sessions.find(session => session.id === activeSessionId)
+    const current = active?.selectedConnectorIds || []
+    const next = current.includes(id)
+      ? current.filter(item => item !== id)
+      : [...current, id]
+    updateSessionConnectors(next).catch(console.error)
+  }
+
+  function toggleModule(id: string) {
+    const active = sessions.find(session => session.id === activeSessionId)
+    const current = active?.selectedModuleIds || []
+    const next = current.includes(id)
+      ? current.filter(item => item !== id)
+      : [...current, id]
+    updateSessionModules(next).catch(console.error)
   }
 
   async function handleExecuteCommand(command: string) {
@@ -366,10 +645,10 @@ export function AppWeb() {
         })
         break
 
-      case 'tool_use':
+      case 'tool_start':
         setMessages(prev => [...prev, {
           id: event.id,
-          type: 'tool_use',
+          type: 'tool_start',
           content: `Calling tool: ${event.toolName}`,
           toolName: event.toolName,
           toolInput: event.input,
@@ -388,9 +667,50 @@ export function AppWeb() {
         }])
         break
 
+      case 'tool_error':
+        setMessages(prev => [...prev, {
+          id: `${event.id}-error`,
+          type: 'tool_error',
+          content: event.error,
+          toolName: event.toolName,
+          timestamp: event.timestamp,
+        }])
+        break
+
+      case 'state_update':
+        setMessages(prev => [...prev, {
+          id: `state-${event.phase}-${event.timestamp}`,
+          type: 'state_update',
+          content: event.detail,
+          timestamp: event.timestamp,
+          isMeta: true,
+        }])
+        break
+
+      case 'report_plan':
+        setLatestReportPlan({
+          reportType: event.reportType,
+          summary: event.summary,
+          trace: event.trace,
+          exports: event.exports,
+        })
+        setMessages(prev => [...prev, {
+          id: `report-plan-${event.timestamp}`,
+          type: 'report_plan',
+          content: event.summary,
+          timestamp: event.timestamp,
+          reportPlan: {
+            reportType: event.reportType,
+            summary: event.summary,
+            trace: event.trace,
+            exports: event.exports,
+          },
+        }])
+        break
+
       case 'system':
         setMessages(prev => [...prev, {
-          id: event.id || crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: 'system',
           content: event.content,
           timestamp: event.timestamp,
@@ -434,6 +754,8 @@ export function AppWeb() {
           onExecuteCommand={handleExecuteCommand}
           onToggleWorkspace={handleToggleWorkspace}
           isWorkspaceOpen={isWorkspaceOpen}
+          activeSurface={activeSurface}
+          onSelectSurface={setActiveSurface}
         />
         {error && (
           <div className="error-banner">
@@ -441,15 +763,41 @@ export function AppWeb() {
             <button onClick={() => setError(null)}>Dismiss</button>
           </div>
         )}
-        <MessageList messages={messages} isLoading={isLoading} />
-        <PromptInput
-          value={inputValue}
-          onChange={setInputValue}
-          onSubmit={handleSubmitQuery}
-          disabled={isLoading || !activeSessionId}
-          isLoading={isLoading}
-          onCancel={handleCancelRequest}
-        />
+        {activeSurface === 'workspace' ? (
+          <>
+            <MessageList messages={messages} isLoading={isLoading} />
+            <PromptInput
+              value={inputValue}
+              onChange={setInputValue}
+              onSubmit={handleSubmitQuery}
+              disabled={isLoading || !activeSessionId}
+              isLoading={isLoading}
+              onCancel={handleCancelRequest}
+            />
+          </>
+        ) : (
+          <AdminStudio
+            connectors={connectors}
+            modules={modules}
+            selectedConnectorIds={sessions.find(session => session.id === activeSessionId)?.selectedConnectorIds || []}
+            selectedModuleIds={sessions.find(session => session.id === activeSessionId)?.selectedModuleIds || []}
+            latestReportPlan={latestReportPlan}
+            onToggleConnector={toggleConnector}
+            onToggleModule={toggleModule}
+            onPublishModule={(id) => publishModule(id).catch(err => setError(err.message))}
+            onCreateConnector={(input) => createConnector(input).catch(err => setError(err.message))}
+            onCreateModule={(input) => createModule(input).catch(err => setError(err.message))}
+            onRefreshModule={(id) => refreshModule(id).catch(err => setError(err.message))}
+            hasAdminAccount={hasAdminAccount}
+            isAdminAuthenticated={Boolean(adminToken)}
+            adminUsername={adminUsername}
+            onSetupAdmin={(credentials) => setupAdmin(credentials).catch(err => setError(err.message))}
+            onLoginAdmin={(credentials) => loginAdmin(credentials).catch(err => setError(err.message))}
+            onLogoutAdmin={() => logoutAdmin().catch(err => setError(err.message))}
+            initialPanel={adminPanel}
+            onPanelChange={setAdminPanel}
+          />
+        )}
       </main>
 
       <CommandPalette
@@ -461,6 +809,23 @@ export function AppWeb() {
       <SettingsManager
         isOpen={isSettingsOpen}
         onClose={handleCloseSettings}
+        connectors={connectors}
+        modules={modules}
+        selectedConnectorIds={sessions.find(session => session.id === activeSessionId)?.selectedConnectorIds || []}
+        selectedModuleIds={sessions.find(session => session.id === activeSessionId)?.selectedModuleIds || []}
+        latestReportPlan={latestReportPlan}
+        onToggleConnector={toggleConnector}
+        onToggleModule={toggleModule}
+        onPublishModule={(id) => publishModule(id).catch(err => setError(err.message))}
+        onCreateConnector={(input) => createConnector(input).catch(err => setError(err.message))}
+        onCreateModule={(input) => createModule(input).catch(err => setError(err.message))}
+        onRefreshModule={(id) => refreshModule(id).catch(err => setError(err.message))}
+        hasAdminAccount={hasAdminAccount}
+        isAdminAuthenticated={Boolean(adminToken)}
+        adminUsername={adminUsername}
+        onSetupAdmin={(credentials) => setupAdmin(credentials).catch(err => setError(err.message))}
+        onLoginAdmin={(credentials) => loginAdmin(credentials).catch(err => setError(err.message))}
+        onLogoutAdmin={() => logoutAdmin().catch(err => setError(err.message))}
       />
 
       {isMessageSelectorVisible && (
@@ -482,6 +847,7 @@ export function AppWeb() {
         fileTree={workspaceFileTree}
         onFileSelect={handleWorkspaceFileSelect}
         activeSessionId={activeSessionId}
+        latestReportPlan={latestReportPlan}
       />
     </div>
   )

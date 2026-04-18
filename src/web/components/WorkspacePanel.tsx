@@ -3,6 +3,8 @@ import Editor from '@monaco-editor/react'
 import { useTranslation } from '../i18n'
 import { DocxPreview } from './DocxPreview'
 import { ExcelPreview } from './ExcelPreview'
+import { ReportInspector } from './ReportInspector'
+import type { ReportPlan } from '../types'
 
 interface WorkspacePanelProps {
   isOpen: boolean
@@ -15,9 +17,10 @@ interface WorkspacePanelProps {
   fileTree: Array<{ name: string; path: string; isDirectory: boolean }>
   onFileSelect: (path: string) => void
   activeSessionId?: string | null
+  latestReportPlan?: ReportPlan | null
 }
 
-type TabType = 'editor' | 'files' | 'preview'
+type TabType = 'editor' | 'files' | 'preview' | 'report'
 
 export function WorkspacePanel({
   isOpen,
@@ -30,6 +33,7 @@ export function WorkspacePanel({
   fileTree,
   onFileSelect,
   activeSessionId,
+  latestReportPlan,
 }: WorkspacePanelProps) {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<TabType>('editor')
@@ -82,6 +86,14 @@ export function WorkspacePanel({
           >
             {t('preview')}
           </button>
+          {latestReportPlan && (
+            <button
+              className={`workspace-tab ${activeTab === 'report' ? 'active' : ''}`}
+              onClick={() => setActiveTab('report')}
+            >
+              Report
+            </button>
+          )}
         </div>
         <button className="workspace-close-btn" onClick={onClose}>×</button>
       </div>
@@ -167,7 +179,6 @@ export function WorkspacePanel({
                 key={`xlsx-${previewKey}`}
                 filePath={currentFile}
                 sessionId={activeSessionId || undefined}
-                filePath={currentFile}
               />
             ) : fileContent ? (
               <div className="preview-content" dangerouslySetInnerHTML={{ __html: fileContent }} />
@@ -176,6 +187,12 @@ export function WorkspacePanel({
                 <p>{t('nothingToPreview')}</p>
               </div>
             )}
+          </div>
+        )}
+
+        {activeTab === 'report' && latestReportPlan && (
+          <div className="report-panel">
+            <ReportInspector plan={latestReportPlan} />
           </div>
         )}
       </div>
