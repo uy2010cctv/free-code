@@ -34,8 +34,37 @@ export function MessageList({ messages, isLoading, onRetry }: MessageListProps) 
     )
   }
 
-  function formatTime(ts: number): string {
-    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  function formatRelativeTime(ts: number): string {
+    const date = new Date(ts)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    if (diffDays === 1) return 'Yesterday'
+    return date.toLocaleDateString()
+  }
+
+  function formatFullTime(ts: number): string {
+    return new Date(ts).toLocaleString()
+  }
+
+  function isSameDay(ts1: number, ts2: number): boolean {
+    const d1 = new Date(ts1)
+    const d2 = new Date(ts2)
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getDate() === d2.getDate()
+  }
+
+  function isConsecutiveSameSender(msg: Message, prevMsg: Message | undefined): boolean {
+    if (!prevMsg) return false
+    return msg.type === prevMsg.type && msg.type === 'user'
   }
 
   function renderContent(content: string): React.ReactNode {
@@ -173,28 +202,43 @@ export function MessageList({ messages, isLoading, onRetry }: MessageListProps) 
 
   return (
     <div ref={containerRef} className="message-list">
-      {messages.map((msg) => (
-        <div key={msg.id} className={`message-row message-${msg.type}${msg.failed ? ' message-failed' : ''}`}>
-          <div className="message-header">
-            <span className={`message-role ${getRoleClass(msg)}`}>
-              {getRoleLabel(msg)}
-            </span>
-            <span className="message-timestamp">{formatTime(msg.timestamp)}</span>
-            {msg.failed && onRetry && (
-              <button
-                className="message-retry-btn"
-                onClick={() => onRetry(msg.id, msg.content)}
-                title="Retry this message"
-              >
-                Retry
-              </button>
+      {messages.map((msg, idx) => {
+        const prevMsg = idx > 0 ? messages[idx - 1] : undefined
+        const showDateSeparator = !prevMsg || !isSameDay(msg.timestamp, prevMsg.timestamp)
+        const isGrouped = isConsecutiveSameSender(msg, prevMsg)
+
+        return (
+          <React.Fragment key={msg.id}>
+            {showDateSeparator && (
+              <div className="message-date-separator">
+                <span>{new Date(msg.timestamp).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+              </div>
             )}
-          </div>
-          <div className="message-content">
-            {renderMessage(msg)}
-          </div>
-        </div>
-      ))}
+            <div className={`message-row message-${msg.type}${msg.failed ? ' message-failed' : ''}${isGrouped ? ' message-grouped' : ''}`}>
+              {!isGrouped && (
+                <div className="message-header">
+                  <span className={`message-role ${getRoleClass(msg)}`}>
+                    {getRoleLabel(msg)}
+                  </span>
+                  <span className="message-timestamp" title={formatFullTime(msg.timestamp)}>{formatRelativeTime(msg.timestamp)}</span>
+                  {msg.failed && onRetry && (
+                    <button
+                      className="message-retry-btn"
+                      onClick={() => onRetry(msg.id, msg.content)}
+                      title="Retry this message"
+                    >
+                      Retry
+                    </button>
+                  )}
+                </div>
+              )}
+              <div className="message-content">
+                {renderMessage(msg)}
+              </div>
+            </div>
+          </React.Fragment>
+        )
+      })}
       {isLoading && (
         <div className="message-row message-assistant">
           <div className="message-header">

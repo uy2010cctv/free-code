@@ -193,6 +193,27 @@ body {
   opacity: 0.7;
 }
 
+.message-row.message-grouped {
+  margin-top: -8px;
+}
+
+.message-row.message-grouped .message-header {
+  display: none;
+}
+
+.message-date-separator {
+  text-align: center;
+  margin: 16px 0;
+  color: #8892a0;
+  font-size: 12px;
+}
+
+.message-date-separator span {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
 .message-retry-btn {
   margin-left: auto;
   background: #ef4444;
