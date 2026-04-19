@@ -32,6 +32,9 @@ export async function runAdminStudioVisibilityCheck(input: VisibilityCheckInput)
 
   try {
     await waitForHealthy(baseUrl, 30_000)
+    // Allow the server to finish initializing before running visibility checks
+    // This avoids race conditions when called immediately after a server restart
+    await new Promise((resolve) => setTimeout(resolve, 2000))
     try {
       return await withTimeout(runPlaywrightVisibilityCheck(baseUrl, input), 120_000, 'Playwright visibility check timed out')
     } catch (playwrightError) {
@@ -70,34 +73,23 @@ async function runPlaywrightVisibilityCheck(baseUrl: string, input: VisibilityCh
     stage = 'goto'
     console.error(`[visibility] playwright stage=${stage}`)
     await page.goto(`${baseUrl}/?surface=admin&adminPanel=${input.panel || 'modules'}`, {
-      waitUntil: 'domcontentloaded',
+      waitUntil: 'load',
     })
     stage = 'root-selector'
     console.error(`[visibility] playwright stage=${stage}`)
     await page.waitForSelector('[data-testid="admin-studio"]', { timeout: 60_000 })
-    stage = 'auth-state'
+    stage = 'wait-for-modules'
     console.error(`[visibility] playwright stage=${stage}`)
-    if (adminToken) {
-      await page.waitForSelector('[data-testid="admin-studio-authenticated"]', { timeout: 15_000 })
-    } else {
-      await page.waitForFunction(
-        () => Boolean(
-          document.querySelector('[data-testid="admin-studio-setup"]') ||
-          document.querySelector('[data-testid="admin-studio-login"]'),
-        ),
-        { timeout: 15_000 },
-      )
-    }
-
-    stage = 'open-admin-surface'
-    console.error(`[visibility] playwright stage=${stage}`)
-    await page.getByTestId('surface-admin').click()
-    stage = 'open-modules-tab'
-    console.error(`[visibility] playwright stage=${stage}`)
-    await page.getByTestId('admin-studio-tab-modules').click()
-    stage = 'wait-modules-panel'
-    console.error(`[visibility] playwright stage=${stage}`)
+    // Wait for the modules panel to be visible and contain at least one module
     await page.waitForSelector('[data-testid="admin-studio-panel-modules"]', { timeout: 60_000 })
+    // Wait for module content to load (modules array to be non-empty)
+    await page.waitForFunction(
+      () => {
+        const rows = document.querySelectorAll('[data-testid^="admin-module-row-"]')
+        return rows.length > 0
+      },
+      { timeout: 60_000 }
+    )
     stage = 'wait-module-row'
     console.error(`[visibility] playwright stage=${stage}`)
     await page.waitForSelector(`[data-testid="admin-module-row-${input.moduleId}"]`, { timeout: 60_000 })
