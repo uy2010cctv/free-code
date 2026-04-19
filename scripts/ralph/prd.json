@@ -568,8 +568,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 39,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added toolbar-brand with icon and product name, plus admin badge for admin mode."
     },
     {
       "id": "US-W11",

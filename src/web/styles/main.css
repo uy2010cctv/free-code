@@ -460,6 +460,7 @@ body {
   gap: 12px;
   max-width: 900px;
   margin: 0 auto;
+  position: relative;
 }
 
 .prompt-textarea {
@@ -527,6 +528,33 @@ body {
 
 .prompt-cancel-btn:hover {
   background: #dc2626;
+}
+
+.prompt-clear-btn {
+  position: absolute;
+  right: 140px;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  color: #8892a0;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.prompt-clear-btn:hover {
+  background: #0f3460;
+  color: #e8e8e8;
+}
+
+.prompt-char-count {
+  text-align: right;
+  font-size: 11px;
+  color: #8892a0;
+  margin-top: 4px;
+  padding-right: 8px;
 }
 
 .prompt-shortcuts {

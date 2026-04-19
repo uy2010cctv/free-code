@@ -61,11 +61,20 @@ export function PromptInput({
               ? t('selectOrCreateSession')
               : isLoading
                 ? t('processing')
-                : t('typeMessage')
+                : 'Ask about your codebase, generate code, debug, or refactor...'
           }
           disabled={disabled || isLoading}
           rows={1}
         />
+        {value.trim() && !isLoading && (
+          <button
+            className="prompt-clear-btn"
+            onClick={() => onChange('')}
+            title={t('clear')}
+          >
+            ×
+          </button>
+        )}
         {isLoading ? (
           <button
             className="prompt-cancel-btn"
@@ -83,6 +92,11 @@ export function PromptInput({
           </button>
         )}
       </div>
+      {value.length > 500 && (
+        <div className="prompt-char-count">
+          {value.length} / 500
+        </div>
+      )}
       <div className="prompt-shortcuts">
         <span className="shortcut"><kbd>Enter</kbd> {t('enterSend')}</span>
         <span className="shortcut"><kbd>Shift</kbd>+<kbd>Enter</kbd> {t('newLine')}</span>
