@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 interface UseWebKeybindingsOptions {
+  onSubmit?: () => void
   onCancel?: () => void
   onClear?: () => void
   onHistorySearch?: () => void
@@ -8,26 +9,35 @@ interface UseWebKeybindingsOptions {
 }
 
 export function useWebKeybindings(options: UseWebKeybindingsOptions = {}) {
-  const { onCancel, onClear, onHistorySearch, onCommandPalette } = options
+  const { onSubmit, onCancel, onClear, onHistorySearch, onCommandPalette } = options
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Ctrl+K: Command palette
-      if (e.ctrlKey && e.key === 'k') {
+      const modKey = e.ctrlKey || e.metaKey
+
+      // Ctrl/Cmd+K: Command palette
+      if (modKey && e.key === 'k') {
         e.preventDefault()
         onCommandPalette?.()
         return
       }
 
-      // Ctrl+R: History search
-      if (e.ctrlKey && e.key === 'r') {
+      // Ctrl/Cmd+R: History search
+      if (modKey && e.key === 'r') {
         e.preventDefault()
         onHistorySearch?.()
         return
       }
 
-      // Ctrl+C: Cancel request (when no text selected)
-      if (e.ctrlKey && e.key === 'c') {
+      // Ctrl/Cmd+Enter: Submit message
+      if (modKey && e.key === 'Enter') {
+        e.preventDefault()
+        onSubmit?.()
+        return
+      }
+
+      // Ctrl/Cmd+C: Cancel request (when no text selected)
+      if (modKey && e.key === 'c') {
         if (!window.getSelection()?.toString()) {
           e.preventDefault()
           onCancel?.()
@@ -35,8 +45,8 @@ export function useWebKeybindings(options: UseWebKeybindingsOptions = {}) {
         return
       }
 
-      // Ctrl+L: Clear screen
-      if (e.ctrlKey && e.key === 'l') {
+      // Ctrl/Cmd+Shift+L: Clear session conversation
+      if (modKey && e.key === 'L') {
         e.preventDefault()
         onClear?.()
         return
@@ -44,11 +54,12 @@ export function useWebKeybindings(options: UseWebKeybindingsOptions = {}) {
 
       // Escape: Cancel request
       if (e.key === 'Escape') {
+        e.preventDefault()
         onCancel?.()
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onCancel, onClear, onHistorySearch, onCommandPalette])
+  }, [onSubmit, onCancel, onClear, onHistorySearch, onCommandPalette])
 }

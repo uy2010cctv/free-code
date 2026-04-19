@@ -185,7 +185,9 @@ export function AppWeb() {
   }
 
   useWebKeybindings({
+    onSubmit: () => { if (inputValue.trim() && !isLoading) handleSubmitQuery(inputValue) },
     onCancel: handleCancelRequest,
+    onClear: () => setMessages([]),
     onCommandPalette: handleOpenCommandPalette,
   })
 

@@ -488,8 +488,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 34,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added onSubmit and onClear to useWebKeybindings. Ctrl/Cmd+Enter submits message, Ctrl/Cmd+Shift+L clears messages, Escape cancels. Used metaKey (Cmd on Mac) alongside ctrlKey."
     },
     {
       "id": "US-W6",
