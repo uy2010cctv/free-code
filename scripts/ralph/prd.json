@@ -342,8 +342,8 @@
         "CI results are visible on the branch"
       ],
       "priority": 24,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created .github/workflows/ci.yml with two jobs: (1) check job runs bun test and bun run web:build, (2) scenario job runs BUILD_STUDIO_20@v1 shadow mode. Runs on push/PR to main and ralph/enterprise-web-agent-platform branches. Uses macos-14 runner."
     },
     {
       "id": "US-N6",
