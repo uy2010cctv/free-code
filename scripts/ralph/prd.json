@@ -584,8 +584,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 40,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added character count, clear button, and improved placeholder text in PromptInput."
     },
     {
       "id": "US-W12",

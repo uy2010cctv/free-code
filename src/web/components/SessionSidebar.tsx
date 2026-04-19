@@ -22,6 +22,56 @@ export function SessionSidebar({
 }: SessionSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month'>('all')
+  const [sortBy, setSortBy] = useState<'recent' | 'alpha'>('recent')
+
+  function formatTimestamp(ts: number): string {
+    const date = new Date(ts)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return 'just now'
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
+
+  function filterSessions(sessions: Session[]): Session[] {
+    let filtered = sessions
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(s => s.title?.toLowerCase().includes(query))
+    }
+
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+    if (dateFilter === 'today') {
+      filtered = filtered.filter(s => s.lastActivityAt >= startOfToday.getTime())
+    } else if (dateFilter === 'week') {
+      const weekAgo = new Date(startOfToday.getTime() - 7 * 86400000)
+      filtered = filtered.filter(s => s.lastActivityAt >= weekAgo.getTime())
+    } else if (dateFilter === 'month') {
+      const monthAgo = new Date(startOfToday.getTime() - 30 * 86400000)
+      filtered = filtered.filter(s => s.lastActivityAt >= monthAgo.getTime())
+    }
+
+    if (sortBy === 'alpha') {
+      filtered = [...filtered].sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+    } else {
+      filtered = [...filtered].sort((a, b) => b.lastActivityAt - a.lastActivityAt)
+    }
+
+    return filtered
+  }
+
+  const filteredSessions = filterSessions(sessions)
 
   function formatTimestamp(ts: number): string {
     const date = new Date(ts)
@@ -75,6 +125,43 @@ export function SessionSidebar({
 
   return (
     <aside className="session-sidebar">
+      <div className="session-search-bar">
+        <input
+          type="text"
+          className="session-search-input"
+          placeholder="Search sessions..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button
+            className="session-search-clear"
+            onClick={() => setSearchQuery('')}
+          >
+            ×
+          </button>
+        )}
+      </div>
+      <div className="session-filter-bar">
+        <select
+          className="session-filter-select"
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value as typeof dateFilter)}
+        >
+          <option value="all">All time</option>
+          <option value="today">Today</option>
+          <option value="week">This week</option>
+          <option value="month">This month</option>
+        </select>
+        <select
+          className="session-filter-select"
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value as typeof sortBy)}
+        >
+          <option value="recent">Most recent</option>
+          <option value="alpha">Alphabetical</option>
+        </select>
+      </div>
       <div className="session-list">
         {isLoading ? (
           <div className="session-skeleton-list">
@@ -85,16 +172,16 @@ export function SessionSidebar({
               </div>
             ))}
           </div>
-        ) : sessions.length === 0 ? (
+        ) : filteredSessions.length === 0 ? (
           <div className="empty-state" style={{ height: 'auto', padding: '32px 16px' }}>
             <div className="empty-state-icon">{ }</div>
-            <div className="empty-state-title">No Sessions</div>
+            <div className="empty-state-title">No Sessions Found</div>
             <div className="empty-state-description">
-              Create a new session to start chatting
+              {searchQuery ? 'Try a different search term' : 'Create a new session to start chatting'}
             </div>
           </div>
         ) : (
-          sessions.map(session => (
+          filteredSessions.map(session => (
             <div
               key={session.id}
               className={`session-item ${session.id === activeSessionId ? 'active' : ''}`}
