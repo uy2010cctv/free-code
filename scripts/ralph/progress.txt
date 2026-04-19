@@ -270,3 +270,14 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - The token passed to auditLogger.log() is the raw token from x-admin-session header
   - server.ts handlers using await must be declared async - TypeScript catches this at compile time
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
+
+## 2026年 4月19日 星期日 01:30PM CST - US-N9
+- What was implemented: Fixed BUILD_STUDIO_20@v1 primary mode failure by simplifying the Playwright visibility check flow in scripts/web-admin-visibility.ts. The original code unnecessarily clicked through UI elements (surface-admin click, admin-studio-tab-modules click) when the page was already loaded with surface=admin&adminPanel=modules URL params. Simplified flow: goto URL with params -> wait for admin-studio -> wait for modules panel -> wait for module rows to appear.
+- Files changed: scripts/web-admin-visibility.ts (simplified visibility check flow), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - When a page loads with URL params that set state directly (surface=admin&adminPanel=modules), do not click through the UI - just wait for the rendered content
+  - waitUntil: load is more reliable than domcontentloaded for ensuring the full page including React hydration is complete
+  - Adding waitForFunction to check for specific DOM rows before proceeding prevents timing issues with async module loading
+  - US-N9 was failing at step 16 (not step 20 as initially thought) - the error message was misleading because the test kept going after the first failure
+---
