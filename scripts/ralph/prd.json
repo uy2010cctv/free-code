@@ -427,8 +427,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 30,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added double-click to rename session. PATCH /api/sessions/:id endpoint implemented with title validation. SessionSidebar shows input field when editingId matches session. handleRenameSession updates local state after API success."
     },
     {
       "id": "US-W2",
