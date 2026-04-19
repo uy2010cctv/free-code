@@ -6,6 +6,7 @@ interface CommandToolbarProps {
   onOpenCommandPalette: () => void
   onExecuteCommand: (command: string) => void
   onToggleWorkspace: () => void
+  onExportConversation?: () => void
   isWorkspaceOpen?: boolean
   activeSurface: 'workspace' | 'admin'
   onSelectSurface: (surface: 'workspace' | 'admin') => void
@@ -20,6 +21,7 @@ export function CommandToolbar({
   onOpenCommandPalette,
   onExecuteCommand,
   onToggleWorkspace,
+  onExportConversation,
   isWorkspaceOpen,
   activeSurface,
   onSelectSurface,
@@ -77,6 +79,13 @@ export function CommandToolbar({
         <span className="toolbar-icon">📁</span>
         <span className="toolbar-label">{t('workspace')}</span>
       </button>
+
+      {onExportConversation && (
+        <button className="toolbar-btn" onClick={onExportConversation} title="Export conversation">
+          <span className="toolbar-icon">↓</span>
+          <span className="toolbar-label">Export</span>
+        </button>
+      )}
 
       <button className="toolbar-btn" onClick={onOpenSettings} title={t('settings')}>
         <span className="toolbar-icon">⚙️</span>

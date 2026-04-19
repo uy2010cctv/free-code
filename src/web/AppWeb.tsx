@@ -327,6 +327,24 @@ export function AppWeb() {
     handleSubmitQuery(content)
   }
 
+  function handleExportConversation() {
+    if (!activeSessionId) return
+    const session = sessions.find(s => s.id === activeSessionId)
+    const lines = [`# Conversation: ${session?.title || 'Untitled'}\n`]
+    for (const msg of messages) {
+      const role = msg.type === 'user' ? '## User' : msg.type === 'assistant' ? '## Assistant' : `## ${msg.type}`
+      lines.push(`${role}\n\n${msg.content}\n`)
+    }
+    const content = lines.join('\n---\n')
+    const blob = new Blob([content], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `session-${activeSessionId}-${Date.now()}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function updateSessionConnectors(connectorIds: string[]) {
     if (!activeSessionId) return
     await adminFetch(`/api/sessions/${activeSessionId}/connectors`, {
@@ -776,6 +794,7 @@ export function AppWeb() {
           onOpenCommandPalette={handleOpenCommandPalette}
           onExecuteCommand={handleExecuteCommand}
           onToggleWorkspace={handleToggleWorkspace}
+          onExportConversation={handleExportConversation}
           isWorkspaceOpen={isWorkspaceOpen}
           activeSurface={activeSurface}
           onSelectSurface={setActiveSurface}
