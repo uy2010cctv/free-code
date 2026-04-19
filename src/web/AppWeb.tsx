@@ -8,6 +8,7 @@ import { MessageSelector } from './components/MessageSelector'
 import { WorkspacePanel } from './components/WorkspacePanel'
 import { SettingsManager } from './components/SettingsManager'
 import { AdminStudio } from './components/AdminStudio'
+import { ToastContainer } from './components/ToastContainer'
 import { useWebKeybindings } from './hooks/useWebKeybindings'
 import { clearAdminToken, loadAdminToken, saveAdminToken } from './utils/adminSession'
 import type {
@@ -48,6 +49,17 @@ export function AppWeb() {
   const [adminPanel, setAdminPanel] = useState<'overview' | 'sources' | 'modules' | 'reports'>(
     ['overview', 'sources', 'modules', 'reports'].includes(initialAdminPanel) ? initialAdminPanel : 'overview',
   )
+  const [toasts, setToasts] = useState<Array<{ id: string; type: 'success' | 'error' | 'info'; message: string }>>([])
+
+  function showToast(type: 'success' | 'error' | 'info', message: string) {
+    const id = crypto.randomUUID()
+    setToasts(prev => [...prev, { id, type, message }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
+  }
+
+  function dismissToast(id: string) {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }
 
   function adminFetch(path: string, init?: RequestInit) {
     const headers = new Headers(init?.headers)
@@ -801,6 +813,7 @@ export function AppWeb() {
           activeSurface={activeSurface}
           onSelectSurface={setActiveSurface}
         />
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
         {error && (
           <div className="error-banner">
             <span>{error}</span>
