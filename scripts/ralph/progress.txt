@@ -250,3 +250,12 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - bun test runs all tests in src/web/engine/__tests__ and src/web/components/__tests__ directories
   - All 25 tests pass (21 engine + 4 component)
 ---
+
+## 2026年 4月19日 星期日 11:55AM CST - US-N7
+- What was implemented: Verified US-N7 is already fully implemented. Rate limiting via createRateLimiter factory (server.ts:21-52) with in-memory Map store. queryRateLimiter (60 req/min per session via req.params.id key) applied to /api/sessions/:id/query (line 471). adminRateLimiter (30 req/min per admin token) applied to /api/admin/* (lines 228-233), skipping /auth/ endpoints. Returns 429 with Retry-After header when limit exceeded. X-RateLimit-Limit and X-RateLimit-Remaining headers set on all responses. All 21 tests pass, build succeeds.
+- Files changed: src/web/server.ts (rate limiting implementation), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - US-N7 was already fully implemented by prior work - always check existing files before assuming implementation is needed
+  - The rate limiter key for sessions uses req.params.id (session ID), for admin uses x-admin-session header
+  - Auth endpoints (/auth/login, /auth/setup, /auth/logout) are excluded from admin rate limiting
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
