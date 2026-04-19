@@ -191,9 +191,11 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
             <span className="message-timestamp">thinking...</span>
           </div>
           <div className="message-content">
-            <div className="loading-indicator">
-              <div className="loading-spinner" />
-              <span>Processing your request...</span>
+            <div className="typing-indicator">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span>AI is thinking...</span>
             </div>
           </div>
         </div>

@@ -442,8 +442,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 31,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced loading-spinner with typing-indicator showing bouncing dots and 'AI is thinking...' text. CSS animation uses keyframes for bouncing dots."
     },
     {
       "id": "US-W3",
