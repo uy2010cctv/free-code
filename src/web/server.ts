@@ -554,21 +554,19 @@ export async function createWebApp(cwd: string = process.cwd()) {
     })
   })
 
+  // Create Vite server in middleware mode and attach to app
+  const vite = await createViteServer({
+    server: { middlewareMode: true, hmr: false },
+    root: join(__dirname),
+  })
+  app.use(vite.middlewares)
+
   return { app, sessionManager }
 }
 
 async function startServer() {
   const PORT = Number(process.env.PORT || 8080)
   const { app } = await createWebApp(process.cwd())
-
-  // Create Vite server in middleware mode
-  const vite = await createViteServer({
-    server: { middlewareMode: true, hmr: false },
-    root: join(__dirname),
-  })
-
-  // Use Vite's middleware for all other requests (frontend)
-  app.use(vite.middlewares)
 
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`)

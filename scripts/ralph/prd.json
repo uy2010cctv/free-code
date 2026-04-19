@@ -356,8 +356,8 @@
         "bun test src/web/components/__tests__ passes"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created src/web/components/__tests__/admin-studio.test.ts with 4 Playwright UI tests covering DataSourceManager, ModuleManager, and surface switching. Required fixing createWebApp to include Vite middleware (was only in startServer). All 25 tests pass (21 engine + 4 component)."
     },
     {
       "id": "US-N7",

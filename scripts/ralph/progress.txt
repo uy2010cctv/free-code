@@ -228,3 +228,25 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - The BUILD_STUDIO_20@v1 scenario is the release gate - run with: bun run web:scenario --mode=shadow
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
 ---
+
+## 2026年 4月19日 星期日 08时45分00秒 CST - US-N5
+- What was implemented: Created .github/workflows/ci.yml with two jobs: (1) check job runs bun test (21 tests) and bun run web:build; (2) scenario job runs BUILD_STUDIO_20@v1 shadow mode as smoke test. Workflow triggers on push and PR to main and ralph/enterprise-web-agent-platform branches. Uses macos-14 runner for Playwright compatibility.
+- Files changed: .github/workflows/ci.yml (new file)
+- **Learnings for future iterations:**
+  - BUILD_STUDIO_20 scenario requires macos-14 runner (Playwright Chromium needs macOS)
+  - scenario job depends on check job (needs: check) to ensure tests pass before running expensive smoke test
+  - bun run web:check = bun test + bun run web:build
+  - bun run web:scenario --mode=shadow runs the full 20-step BUILD_STUDIO_20 smoke test
+  - CI results visible at github.com/<owner>/<repo>/actions
+---
+
+## 2026年 4月19日 星期日 09时00分00秒 CST - US-N6
+- What was implemented: Created src/web/components/__tests__/admin-studio.test.ts with 4 Playwright UI tests covering DataSourceManager, ModuleManager, and Admin Studio surface switching. Required fixing createWebApp to include Vite middleware (it was only added in startServer(), not in createWebApp() itself). Installed Playwright Chromium browser for headless testing.
+- Files changed: src/web/components/__tests__/admin-studio.test.ts (new), src/web/server.ts (moved Vite middleware creation into createWebApp)
+- **Learnings for future iterations:**
+  - createWebApp() did NOT include Vite middleware - startServer() added it separately. This caused / to return 404 in tests.
+  - createWebApp must include app.use(vite.middlewares) to serve the frontend
+  - Playwright chromium browser must be installed via: bunx playwright install chromium
+  - bun test runs all tests in src/web/engine/__tests__ and src/web/components/__tests__ directories
+  - All 25 tests pass (21 engine + 4 component)
+---
