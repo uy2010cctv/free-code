@@ -281,3 +281,14 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - Adding waitForFunction to check for specific DOM rows before proceeding prevents timing issues with async module loading
   - US-N9 was failing at step 16 (not step 20 as initially thought) - the error message was misleading because the test kept going after the first failure
 ---
+---
+
+## 2026年 4月19日 星期日 02:00PM CST - US-W1
+- What was implemented: Added session rename functionality via double-click. Implemented PATCH /api/sessions/:id endpoint in server.ts with title validation. SessionSidebar shows input field when editingId matches session, handleRenameSession updates local state after API success. CSS for session-title-input added to main.css.
+- Files changed: src/web/server.ts (PATCH endpoint), src/web/components/SessionSidebar.tsx (rename UI), src/web/AppWeb.tsx (handleRenameSession), src/web/styles/main.css (session-title-input styling), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - SessionManager.updateSessionTitle already existed - server.ts just needed a PATCH endpoint to expose it
+  - Editing state (editingId, editValue) is local to SessionSidebar component - no need to lift to AppWeb
+  - PATCH endpoint validation: check typeof title === string and !title.trim() before calling sessionManager
+  - Always use commit message format: feat: [Story ID] - [Story Title]
+---
