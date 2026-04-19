@@ -259,3 +259,14 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - The rate limiter key for sessions uses req.params.id (session ID), for admin uses x-admin-session header
   - Auth endpoints (/auth/login, /auth/setup, /auth/logout) are excluded from admin rate limiting
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
+
+## 2026年 4月19日 星期日 12:10PM CST - US-N8
+- What was implemented: Implemented audit logging for admin operations. Created AuditLogger in src/web/engine/audit/AuditLogger.ts with log() method that writes JSON Lines to .free-code-enterprise/audit.log. Each entry includes: timestamp (ISO 8601), adminTokenHash (SHA256, first 16 chars), action, resourceId, outcome. Integrated audit logging into server.ts for: auth.login, auth.logout, auth.setup, connector.create, connector.update, module.save, module.refresh, module.publish.
+- Files changed: src/web/engine/audit/AuditLogger.ts (new), src/web/server.ts (audit logging integration), scripts/ralph/prd.json (passes: true)
+- **Learnings for future iterations:**
+  - AuditLogger uses fs/promises appendFile for sequential writes - concurrent writes may need mutex/lock for production
+  - Admin token is hashed with SHA256 for privacy - only first 16 chars stored in logs
+  - The token passed to auditLogger.log() is the raw token from x-admin-session header
+  - server.ts handlers using await must be declared async - TypeScript catches this at compile time
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
