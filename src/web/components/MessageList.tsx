@@ -26,7 +26,8 @@ export function MessageList({ messages, isLoading, onRetry }: MessageListProps) 
           <div className="empty-state-icon">[ ]</div>
           <div className="empty-state-title">Ready to Assist</div>
           <div className="empty-state-description">
-            Type a message below to start a conversation with the AI coding agent.
+            Start a conversation to explore your codebase, generate code, or ask questions.
+            Try asking about file structure, debugging help, or code refactoring.
           </div>
         </div>
       </div>

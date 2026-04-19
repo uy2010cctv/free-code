@@ -132,24 +132,35 @@ export function DataSourceManager({
         </div>
       )}
       <div className="enterprise-panel-body">
-        {connectors.map(connector => (
-          <label key={connector.id} className="enterprise-row" data-testid={`admin-connector-row-${connector.id}`}>
-            <input
-              type="checkbox"
-              checked={selectedConnectorIds.includes(connector.id)}
-              onChange={() => onToggleConnector(connector.id)}
-            />
-            <div className="enterprise-main">
-              <strong>{connector.name}</strong>
-              <span>{connector.description}</span>
+        {connectors.length === 0 ? (
+          <div className="enterprise-empty-state">
+            <div className="enterprise-empty-icon">C</div>
+            <div className="enterprise-empty-title">No Data Sources</div>
+            <div className="enterprise-empty-description">
+              Add data sources in Admin Studio to enable enterprise data connectivity.
+              Connectors define how the agent accesses databases, files, and external APIs.
             </div>
-            <div className="enterprise-sidecar">
-              <span className={`status-badge status-${connector.status}`}>{connector.status}</span>
-              <span className="module-version">{connector.kind}</span>
-              <span className="module-version">{connector.compatibilityStatus}</span>
-            </div>
-          </label>
-        ))}
+          </div>
+        ) : (
+          connectors.map(connector => (
+            <label key={connector.id} className="enterprise-row" data-testid={`admin-connector-row-${connector.id}`}>
+              <input
+                type="checkbox"
+                checked={selectedConnectorIds.includes(connector.id)}
+                onChange={() => onToggleConnector(connector.id)}
+              />
+              <div className="enterprise-main">
+                <strong>{connector.name}</strong>
+                <span>{connector.description}</span>
+              </div>
+              <div className="enterprise-sidecar">
+                <span className={`status-badge status-${connector.status}`}>{connector.status}</span>
+                <span className="module-version">{connector.kind}</span>
+                <span className="module-version">{connector.compatibilityStatus}</span>
+              </div>
+            </label>
+          ))
+        )}
       </div>
     </section>
   )

@@ -141,7 +141,16 @@ export function ModuleManager({
         </div>
       )}
       <div className="enterprise-panel-body">
-        {modules.map(module => (
+        {modules.length === 0 ? (
+          <div className="enterprise-empty-state">
+            <div className="enterprise-empty-icon">M</div>
+            <div className="enterprise-empty-title">No Modules</div>
+            <div className="enterprise-empty-description">
+              Add modules in Admin Studio to enable enterprise capabilities.
+              Business modules define prompts, report templates, and connector requirements.
+            </div>
+          </div>
+        ) : modules.map(module => (
           <label key={module.id} className="enterprise-row" data-testid={`admin-module-row-${module.id}`}>
             <input
               type="checkbox"

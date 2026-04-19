@@ -1,0 +1,20 @@
+{
+  "id": "e0414415-978d-425f-a421-19ff1de6a843",
+  "title": "New Session",
+  "createdAt": 1776327077784,
+  "lastActivityAt": 1776327077910,
+  "messages": [],
+  "workspacePath": "/Users/kris/项目/Project_demo/evolution/free-code/workspace/e0414415-978d-425f-a421-19ff1de6a843",
+  "selectedConnectorIds": [
+    "ops-db"
+  ],
+  "selectedModuleIds": [
+    "ops-daily"
+  ],
+  "lastReportId": "ops-summary-1776327077910",
+  "lastGeneratedOutputs": [
+    "docx",
+    "xlsx",
+    "report"
+  ]
+}

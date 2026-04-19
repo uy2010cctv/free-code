@@ -1,0 +1,153 @@
+{
+  "connectors": [
+    {
+      "id": "workspace-files",
+      "name": "Workspace Files",
+      "kind": "file",
+      "description": "Files generated or uploaded inside the current session workspace.",
+      "capabilities": [
+        "read",
+        "list"
+      ],
+      "status": "connected",
+      "config": {
+        "scope": "session-workspace"
+      },
+      "authType": "none",
+      "schemaHints": [
+        "workspace files",
+        "generated documents",
+        "uploaded spreadsheets"
+      ],
+      "compatibilityStatus": "ready"
+    },
+    {
+      "id": "sales-db-demo",
+      "name": "Sales Database (Demo)",
+      "kind": "database",
+      "description": "Placeholder relational sales source for enterprise report prototyping.",
+      "capabilities": [
+        "read",
+        "aggregate"
+      ],
+      "status": "disconnected",
+      "config": {
+        "driver": "postgres"
+      },
+      "authType": "serviceAccount",
+      "schemaHints": [
+        "sales pipeline",
+        "regional performance",
+        "account revenue"
+      ],
+      "compatibilityStatus": "beta"
+    },
+    {
+      "id": "crm-api-demo",
+      "name": "CRM API (Demo)",
+      "kind": "external",
+      "description": "Placeholder external CRM connector for customer and pipeline sync.",
+      "capabilities": [
+        "read"
+      ],
+      "status": "disconnected",
+      "config": {
+        "provider": "crm-demo"
+      },
+      "authType": "apiKey",
+      "schemaHints": [
+        "customer profile",
+        "deal stage",
+        "follow-up activity"
+      ],
+      "compatibilityStatus": "beta"
+    },
+    {
+      "id": "persist-db",
+      "name": "Persist DB",
+      "kind": "database",
+      "description": "Persistent warehouse",
+      "capabilities": [
+        "read"
+      ],
+      "status": "connected",
+      "config": {},
+      "authType": "serviceAccount",
+      "schemaHints": [
+        "orders"
+      ],
+      "compatibilityStatus": "ready"
+    }
+  ],
+  "modules": [
+    {
+      "id": "reporting-core",
+      "name": "Reporting Core",
+      "description": "Base report planning module for business summaries and structured exports.",
+      "version": "1.0.0",
+      "prompts": [
+        "monthly report",
+        "sales summary",
+        "operations dashboard"
+      ],
+      "requiredConnectorKinds": [
+        "file"
+      ],
+      "reportTemplates": [
+        "monthly-sales",
+        "ops-summary"
+      ],
+      "outputFormats": [
+        "docx",
+        "xlsx",
+        "report"
+      ],
+      "lifecycleState": "published",
+      "publishedAt": 1776297600000,
+      "refreshedAt": 1776297600000
+    },
+    {
+      "id": "finance-pack",
+      "name": "Finance Pack",
+      "description": "Finance-oriented module for reconciliation, ledger exports, and budget reports.",
+      "version": "1.0.0",
+      "prompts": [
+        "budget report",
+        "profit and loss",
+        "expense summary"
+      ],
+      "requiredConnectorKinds": [
+        "database"
+      ],
+      "reportTemplates": [
+        "finance-summary"
+      ],
+      "outputFormats": [
+        "xlsx",
+        "report"
+      ],
+      "lifecycleState": "published",
+      "publishedAt": 1776297600000,
+      "refreshedAt": 1776297600000
+    },
+    {
+      "id": "persist-module",
+      "name": "Persist Module",
+      "description": "Persistent module",
+      "version": "1.0.0",
+      "prompts": [
+        "persist"
+      ],
+      "requiredConnectorKinds": [
+        "database"
+      ],
+      "reportTemplates": [
+        "ops-summary"
+      ],
+      "outputFormats": [
+        "report"
+      ],
+      "lifecycleState": "draft"
+    }
+  ]
+}

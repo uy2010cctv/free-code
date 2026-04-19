@@ -536,8 +536,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 37,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added enterprise-empty-state to ModuleManager (no modules) and DataSourceManager (no connectors). SessionSidebar shows 'No Sessions' with CTA. MessageList shows 'Ready to Assist' with getting started tips."
     },
     {
       "id": "US-W9",
