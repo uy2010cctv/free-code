@@ -8,6 +8,7 @@ interface CommandToolbarProps {
   onToggleWorkspace: () => void
   onExportConversation?: () => void
   isWorkspaceOpen?: boolean
+  isAdminMode?: boolean
   activeSurface: 'workspace' | 'admin'
   onSelectSurface: (surface: 'workspace' | 'admin') => void
 }
@@ -23,6 +24,7 @@ export function CommandToolbar({
   onToggleWorkspace,
   onExportConversation,
   isWorkspaceOpen,
+  isAdminMode,
   activeSurface,
   onSelectSurface,
 }: CommandToolbarProps) {
@@ -30,6 +32,13 @@ export function CommandToolbar({
 
   return (
     <div className="command-toolbar">
+      <div className="toolbar-brand">
+        <span className="toolbar-brand-icon">◈</span>
+        <span className="toolbar-brand-name">Enterprise Web Agent</span>
+        {isAdminMode && <span className="toolbar-admin-badge">Admin</span>}
+      </div>
+
+      <div className="toolbar-divider" />
       <div className="surface-switcher" data-testid="surface-switcher">
         <button
           className={`toolbar-btn ${activeSurface === 'workspace' ? 'active' : ''}`}

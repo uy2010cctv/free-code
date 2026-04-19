@@ -810,6 +810,7 @@ export function AppWeb() {
           onToggleWorkspace={handleToggleWorkspace}
           onExportConversation={handleExportConversation}
           isWorkspaceOpen={isWorkspaceOpen}
+          isAdminMode={activeSurface === 'admin'}
           activeSurface={activeSurface}
           onSelectSurface={setActiveSurface}
         />

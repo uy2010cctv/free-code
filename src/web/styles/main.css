@@ -755,6 +755,33 @@ body {
   font-size: 12px;
 }
 
+.toolbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-brand-icon {
+  font-size: 18px;
+  color: #00d9ff;
+}
+
+.toolbar-brand-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8e8e8;
+  letter-spacing: 0.5px;
+}
+
+.toolbar-admin-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  font-weight: 500;
+}
+
 .toolbar-divider {
   width: 1px;
   height: 24px;
