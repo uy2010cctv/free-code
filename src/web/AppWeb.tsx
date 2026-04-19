@@ -305,6 +305,21 @@ export function AppWeb() {
     }
   }
 
+  async function handleRenameSession(sessionId: string, title: string) {
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      })
+      if (res.ok) {
+        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title } : s))
+      }
+    } catch (err) {
+      console.error('Failed to rename session:', err)
+    }
+  }
+
   async function updateSessionConnectors(connectorIds: string[]) {
     if (!activeSessionId) return
     await adminFetch(`/api/sessions/${activeSessionId}/connectors`, {
@@ -742,6 +757,7 @@ export function AppWeb() {
         onSelectSession={setActiveSessionId}
         onCreateSession={handleCreateSession}
         onDeleteSession={handleDeleteSession}
+        onRenameSession={handleRenameSession}
       />
       <main className="flex-1 flex flex-col overflow-hidden">
         <CommandToolbar

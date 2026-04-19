@@ -113,6 +113,18 @@ export async function createWebApp(cwd: string = process.cwd()) {
     }
   })
 
+  // Update session
+  app.patch('/api/sessions/:id', (req: Request, res: Response) => {
+    const { id } = req.params
+    const { title } = req.body
+    if (typeof title !== 'string' || !title.trim()) {
+      res.status(400).json({ error: 'title must be a non-empty string' })
+      return
+    }
+    sessionManager.updateSessionTitle(id, title.trim())
+    res.json({ success: true })
+  })
+
   // Get session messages
   app.get('/api/sessions/:id/messages', (req: Request, res: Response) => {
     const { id } = req.params

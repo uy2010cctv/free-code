@@ -78,6 +78,19 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
+  cursor: text;
+}
+
+.session-title-input {
+  flex: 1;
+  font-size: 14px;
+  background: #1a2744;
+  border: 1px solid #00d9ff;
+  color: #e2e8f0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  outline: none;
+  min-width: 0;
 }
 
 .session-item-delete {

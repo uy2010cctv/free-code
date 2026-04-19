@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import type { Session } from '../types'
 
 interface SessionSidebarProps {
@@ -7,6 +7,7 @@ interface SessionSidebarProps {
   onSelectSession: (sessionId: string) => void
   onCreateSession: () => void
   onDeleteSession: (sessionId: string) => void
+  onRenameSession: (sessionId: string, title: string) => void
 }
 
 export function SessionSidebar({
@@ -15,7 +16,11 @@ export function SessionSidebar({
   onSelectSession,
   onCreateSession,
   onDeleteSession,
+  onRenameSession,
 }: SessionSidebarProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editValue, setEditValue] = useState('')
+
   function formatTimestamp(ts: number): string {
     const date = new Date(ts)
     const now = new Date()
@@ -38,6 +43,34 @@ export function SessionSidebar({
     }
   }
 
+  function startEdit(e: React.MouseEvent, sessionId: string, currentTitle: string) {
+    e.stopPropagation()
+    setEditingId(sessionId)
+    setEditValue(currentTitle || '')
+  }
+
+  function commitEdit(sessionId: string) {
+    const trimmed = editValue.trim()
+    if (trimmed) {
+      onRenameSession(sessionId, trimmed)
+    }
+    setEditingId(null)
+    setEditValue('')
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditValue('')
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent, sessionId: string) {
+    if (e.key === 'Enter') {
+      commitEdit(sessionId)
+    } else if (e.key === 'Escape') {
+      cancelEdit()
+    }
+  }
+
   return (
     <aside className="session-sidebar">
       <div className="session-list">
@@ -57,9 +90,25 @@ export function SessionSidebar({
               onClick={() => onSelectSession(session.id)}
             >
               <div className="flex-1 min-w-0">
-                <div className="session-item-title">
-                  {session.title || 'New Session'}
-                </div>
+                {editingId === session.id ? (
+                  <input
+                    className="session-title-input"
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    onKeyDown={e => handleEditKeyDown(e, session.id)}
+                    onBlur={() => commitEdit(session.id)}
+                    onClick={e => e.stopPropagation()}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    className="session-item-title"
+                    onDoubleClick={e => startEdit(e, session.id, session.title || 'New Session')}
+                    title="Double-click to rename"
+                  >
+                    {session.title || 'New Session'}
+                  </div>
+                )}
                 <div className="text-xs text-term-muted mt-1">
                   {formatTimestamp(session.lastActivityAt)}
                 </div>
