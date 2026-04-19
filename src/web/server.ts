@@ -7,6 +7,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'path'
 import { createServer as createViteServer } from 'vite'
 import { SessionManager, type StreamEvent } from './engine/index.js'
 import { AdminAuthService } from './engine/auth/AdminAuthService.js'
+import { AuditLogger } from './engine/audit/AuditLogger.js'
 import { readFile, writeFile, readdir } from 'fs/promises'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -62,6 +63,8 @@ export async function createWebApp(cwd: string = process.cwd()) {
   await sessionManager.initialize()
   const adminAuth = new AdminAuthService(resolve(cwd, '.free-code-enterprise', 'admin-auth.json'))
   await adminAuth.initialize()
+  const auditLogger = new AuditLogger(resolve(cwd, '.free-code-enterprise'))
+  await auditLogger.initialize()
 
   let activeQueryController: AbortController | null = null
 
@@ -198,13 +201,15 @@ export async function createWebApp(cwd: string = process.cwd()) {
 
     try {
       const token = await adminAuth.setupAdmin(String(username), String(password), String(bootstrapSecret))
+      await auditLogger.log(token, 'auth.setup', undefined, 'success', { username })
       res.json({ success: true, token, username: String(username) })
     } catch (error: any) {
+      await auditLogger.log(req.header('x-admin-session'), 'auth.setup', undefined, 'failure', { error: error.message })
       res.status(400).json({ error: error.message || 'Failed to setup admin account' })
     }
   })
 
-  app.post('/api/admin/auth/login', (req: Request, res: Response) => {
+  app.post('/api/admin/auth/login', async (req: Request, res: Response) => {
     const { username, password } = req.body || {}
     if (!username || !password) {
       res.status(400).json({ error: 'username and password are required' })
@@ -213,14 +218,18 @@ export async function createWebApp(cwd: string = process.cwd()) {
 
     try {
       const token = adminAuth.login(String(username), String(password))
+      await auditLogger.log(token, 'auth.login', undefined, 'success', { username })
       res.json({ success: true, token, username: String(username) })
     } catch (error: any) {
+      await auditLogger.log(req.header('x-admin-session'), 'auth.login', undefined, 'failure', { error: error.message })
       res.status(401).json({ error: error.message || 'Login failed' })
     }
   })
 
   app.post('/api/admin/auth/logout', (req: Request, res: Response) => {
-    adminAuth.logout(req.header('x-admin-session') || undefined)
+    const token = req.header('x-admin-session') || undefined
+    adminAuth.logout(token)
+    auditLogger.log(token, 'auth.logout', undefined, 'success').catch(console.error)
     res.json({ success: true })
   })
 
@@ -239,17 +248,29 @@ export async function createWebApp(cwd: string = process.cwd()) {
 
   app.post('/api/admin/connectors', async (req: Request, res: Response) => {
     if (!requireAdmin(req, res)) return
-    await sessionManager.registerConnector(req.body)
-    res.json({ success: true, connector: req.body })
+    const token = req.header('x-admin-session')
+    const connectorId = req.body?.id
+    try {
+      await sessionManager.registerConnector(req.body)
+      await auditLogger.log(token, 'connector.create', connectorId, 'success')
+      res.json({ success: true, connector: req.body })
+    } catch (error: any) {
+      await auditLogger.log(token, 'connector.create', connectorId, 'failure', { error: error.message })
+      res.status(500).json({ error: error.message || 'Failed to register connector' })
+    }
   })
 
   app.put('/api/admin/connectors/:id', async (req: Request, res: Response) => {
     if (!requireAdmin(req, res)) return
-    const connector = await sessionManager.updateConnector(req.params.id, req.body)
+    const token = req.header('x-admin-session')
+    const connectorId = req.params.id
+    const connector = await sessionManager.updateConnector(connectorId, req.body)
     if (!connector) {
+      await auditLogger.log(token, 'connector.update', connectorId, 'failure', { error: 'Connector not found' })
       res.status(404).json({ error: 'Connector not found' })
       return
     }
+    await auditLogger.log(token, 'connector.update', connectorId, 'success')
     res.json({ success: true, connector })
   })
 
@@ -275,37 +296,51 @@ export async function createWebApp(cwd: string = process.cwd()) {
 
   app.post('/api/admin/modules', async (req: Request, res: Response) => {
     if (!requireAdmin(req, res)) return
+    const token = req.header('x-admin-session')
     const body = req.body || {}
-    const module = await sessionManager.saveModule({
-      id: String(body.id || ''),
-      name: String(body.name || ''),
-      description: String(body.description || ''),
-      version: String(body.version || '1.0.0'),
-      prompts: Array.isArray(body.prompts) ? body.prompts : [],
-      requiredConnectorKinds: Array.isArray(body.requiredConnectorKinds) ? body.requiredConnectorKinds : [],
-      reportTemplates: Array.isArray(body.reportTemplates) ? body.reportTemplates : [],
-      outputFormats: Array.isArray(body.outputFormats) ? body.outputFormats : ['docx', 'xlsx', 'report'],
-      lifecycleState: 'draft',
-      refreshedAt: undefined,
-      publishedAt: undefined,
-    })
-    res.json({ success: true, module })
+    const moduleId = String(body.id || '')
+    try {
+      const module = await sessionManager.saveModule({
+        id: moduleId,
+        name: String(body.name || ''),
+        description: String(body.description || ''),
+        version: String(body.version || '1.0.0'),
+        prompts: Array.isArray(body.prompts) ? body.prompts : [],
+        requiredConnectorKinds: Array.isArray(body.requiredConnectorKinds) ? body.requiredConnectorKinds : [],
+        reportTemplates: Array.isArray(body.reportTemplates) ? body.reportTemplates : [],
+        outputFormats: Array.isArray(body.outputFormats) ? body.outputFormats : ['docx', 'xlsx', 'report'],
+        lifecycleState: 'draft',
+        refreshedAt: undefined,
+        publishedAt: undefined,
+      })
+      await auditLogger.log(token, 'module.save', moduleId, 'success')
+      res.json({ success: true, module })
+    } catch (error: any) {
+      await auditLogger.log(token, 'module.save', moduleId, 'failure', { error: error.message })
+      res.status(500).json({ error: error.message || 'Failed to save module' })
+    }
   })
 
   app.post('/api/admin/modules/refresh', async (req: Request, res: Response) => {
     if (!requireAdmin(req, res)) return
+    const token = req.header('x-admin-session')
     const modules = Array.isArray(req.body.modules) ? req.body.modules : []
     await sessionManager.refreshModules(modules)
+    await auditLogger.log(token, 'module.refresh', undefined, 'success', { moduleCount: modules.length })
     res.json({ success: true })
   })
 
   app.post('/api/admin/modules/:id/refresh', async (req: Request, res: Response) => {
     if (!requireAdmin(req, res)) return
-    const module = await sessionManager.refreshModule(req.params.id)
+    const token = req.header('x-admin-session')
+    const moduleId = req.params.id
+    const module = await sessionManager.refreshModule(moduleId)
     if (!module) {
+      await auditLogger.log(token, 'module.refresh', moduleId, 'failure', { error: 'Module not found' })
       res.status(404).json({ error: 'Module not found' })
       return
     }
+    await auditLogger.log(token, 'module.refresh', moduleId, 'success')
     res.json({ success: true, module })
   })
 
@@ -316,12 +351,15 @@ export async function createWebApp(cwd: string = process.cwd()) {
       return
     }
 
-    const published = await sessionManager.publishModule(req.params.id)
+    const token = req.header('x-admin-session')
+    const moduleId = req.params.id
+    const published = await sessionManager.publishModule(moduleId)
     if (!published) {
+      await auditLogger.log(token, 'module.publish', moduleId, 'failure', { error: 'Module not found' })
       res.status(404).json({ error: 'Module not found' })
       return
     }
-
+    await auditLogger.log(token, 'module.publish', moduleId, 'success')
     res.json({ success: true, module: published })
   })
 
