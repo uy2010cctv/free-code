@@ -8,6 +8,7 @@ interface SessionSidebarProps {
   onCreateSession: () => void
   onDeleteSession: (sessionId: string) => void
   onRenameSession: (sessionId: string, title: string) => void
+  isLoading?: boolean
 }
 
 export function SessionSidebar({
@@ -17,6 +18,7 @@ export function SessionSidebar({
   onCreateSession,
   onDeleteSession,
   onRenameSession,
+  isLoading = false,
 }: SessionSidebarProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -74,7 +76,16 @@ export function SessionSidebar({
   return (
     <aside className="session-sidebar">
       <div className="session-list">
-        {sessions.length === 0 ? (
+        {isLoading ? (
+          <div className="session-skeleton-list">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="session-skeleton-item">
+                <div className="skeleton-title" />
+                <div className="skeleton-time" />
+              </div>
+            ))}
+          </div>
+        ) : sessions.length === 0 ? (
           <div className="empty-state" style={{ height: 'auto', padding: '32px 16px' }}>
             <div className="empty-state-icon">{ }</div>
             <div className="empty-state-title">No Sessions</div>
