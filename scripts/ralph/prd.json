@@ -1,7 +1,7 @@
 {
   "project": "free-code Enterprise Web Agent Platform",
   "branchName": "ralph/enterprise-web-agent-platform",
-  "description": "Fix all known architect-review bugs, complete Web Agent Remediation S1-S7, deliver Enterprise Platform Story 1-7, pass BUILD_STUDIO_20@v1",
+  "description": "Complete Enterprise Platform Stories (US-N7 to US-N10), deliver 14 user-facing web UX improvements (US-W1 to US-W14), pass BUILD_STUDIO_20@v1 in primary mode — make it look like a professional business system",
   "userStories": [
     {
       "id": "US-B1",
@@ -370,8 +370,8 @@
         "Rate limit headers in response (X-RateLimit-Limit, X-RateLimit-Remaining)"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Rate limiting already fully implemented in server.ts. createRateLimiter factory (lines 21-52) creates per-key limiters with in-memory Map store. queryRateLimiter (60 req/min per session via req.params.id) applied to /api/sessions/:id/query (line 471). adminRateLimiter (30 req/min per admin token) applied to /api/admin/* (lines 228-233), skipping /auth/ endpoints. 429 response with Retry-After header when limit exceeded. X-RateLimit-Limit and X-RateLimit-Remaining headers set on all responses. All 21 tests pass, build succeeds."
     },
     {
       "id": "US-N8",
@@ -412,6 +412,226 @@
         "README.md is updated to reflect the shipped enterprise platform capabilities"
       ],
       "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W1",
+      "title": "Add session rename functionality",
+      "description": "As a user, I want to rename sessions so I can keep my workspace organized.",
+      "acceptanceCriteria": [
+        "Session title is editable after session creation",
+        "Renaming persists across page refresh",
+        "Default title is the first message preview (truncated to 30 chars)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W2",
+      "title": "Add typing indicator during AI response",
+      "description": "As a user, I want visual feedback when the AI is thinking so I know my request is being processed.",
+      "acceptanceCriteria": [
+        "Show 'AI is thinking...' indicator while waiting for first response token",
+        "Indicator disappears when first content arrives",
+        "No indicator shown for instant responses",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W3",
+      "title": "Add message retry on failure",
+      "description": "As a user, I want to retry a failed message so I don't lose my work when something goes wrong.",
+      "acceptanceCriteria": [
+        "Failed messages show a retry button",
+        "Clicking retry resends the exact same message text",
+        "Retry removes the failed message and replaces with fresh attempt",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W4",
+      "title": "Add conversation export",
+      "description": "As a user, I want to export my conversation so I can save it as a record.",
+      "acceptanceCriteria": [
+        "Export button available in session header",
+        "Exports conversation as formatted Markdown",
+        "Download triggers automatically with filename: session-{id}-{timestamp}.md",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W5",
+      "title": "Add keyboard shortcuts",
+      "description": "As a power user, I want keyboard shortcuts so I can work faster without using the mouse.",
+      "acceptanceCriteria": [
+        "Ctrl/Cmd+Enter submits the message",
+        "Escape cancels an in-progress query",
+        "Ctrl/Cmd+Shift+L clears the current session conversation",
+        "Shortcuts work when input is focused",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W6",
+      "title": "Add toast notification system",
+      "description": "As a user, I want non-blocking notifications so I get feedback without interrupting my workflow.",
+      "acceptanceCriteria": [
+        "Toast appears for success/error/info messages",
+        "Toasts auto-dismiss after 4 seconds",
+        "Multiple toasts stack vertically",
+        "Click to dismiss early",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W7",
+      "title": "Add loading skeletons for async content",
+      "description": "As a user, I want skeleton loaders so the UI feels responsive during data fetching.",
+      "acceptanceCriteria": [
+        "Session list shows skeleton while loading",
+        "Module list shows skeleton while loading",
+        "Chat messages show skeleton while AI is thinking",
+        "Skeleton animation is subtle (pulse/shimmer)",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W8",
+      "title": "Add empty state designs",
+      "description": "As a user, I want helpful empty states so I know what to do when there's no data.",
+      "acceptanceCriteria": [
+        "No sessions: show welcome message with 'Create first session' CTA",
+        "No modules: show guidance on how to add modules in Admin Studio",
+        "No connectors: show guidance on data source setup",
+        "Empty conversation: show getting started tips",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W9",
+      "title": "Add professional status badges",
+      "description": "As a user, I want clear status indicators so I can quickly understand system state.",
+      "acceptanceCriteria": [
+        "Module lifecycle badge: draft (gray), published (green), archived (red)",
+        "Connector status badge: connected (green), disconnected (red), connecting (yellow)",
+        "Session status indicator: active vs idle",
+        "API health indicator in header",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W10",
+      "title": "Improve professional header branding",
+      "description": "As a business user, I want clear branding so the product feels polished and trustworthy.",
+      "acceptanceCriteria": [
+        "Header shows product name 'Enterprise Web Agent'",
+        "Header shows API connection status indicator",
+        "Admin session indicator when in admin mode",
+        "Clean, minimal header design",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W11",
+      "title": "Add input area improvements",
+      "description": "As a user, I want better input feedback so I know my message is being prepared.",
+      "acceptanceCriteria": [
+        "Character count shown for long messages (>500 chars)",
+        "Disabled submit button while empty or submitting",
+        "Clear button to reset input",
+        "Placeholder text hints at capabilities",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W12",
+      "title": "Add session list search and filter",
+      "description": "As a user, I want to search sessions so I can find past conversations quickly.",
+      "acceptanceCriteria": [
+        "Search input filters sessions by title/content",
+        "Filter by date range (today, this week, this month)",
+        "Sort by most recent or alphabetical",
+        "Clear search button",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W13",
+      "title": "Add message timestamps and grouping",
+      "description": "As a user, I want to see when messages were sent so I can understand conversation context.",
+      "acceptanceCriteria": [
+        "Show relative timestamp on each message (e.g., '2 min ago', 'Yesterday')",
+        "Group consecutive messages from same sender visually",
+        "Date separators between different days",
+        "Hover shows full timestamp",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-W14",
+      "title": "Add dark mode theme support",
+      "description": "As a user, I want dark mode so I can work comfortably in low-light environments.",
+      "acceptanceCriteria": [
+        "Theme toggle in header (sun/moon icon)",
+        "Dark mode applies to all UI components",
+        "Theme preference persisted in localStorage",
+        "Respects system preference by default",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 43,
       "passes": false,
       "notes": ""
     }

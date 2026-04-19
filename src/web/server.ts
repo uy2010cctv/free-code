@@ -12,6 +12,45 @@ import { readFile, writeFile, readdir } from 'fs/promises'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+// Simple in-memory rate limiter
+interface RateLimitEntry {
+  count: number
+  resetAt: number
+}
+
+function createRateLimiter(windowMs: number, maxRequests: number) {
+  const store = new Map<string, RateLimitEntry>()
+
+  return function rateLimiter(req: Request, res: Response, next: () => void) {
+    const key = req.params.id
+      ? `${req.path}:${req.params.id}`
+      : `admin:${req.header('x-admin-session') || 'anonymous'}`
+
+    const now = Date.now()
+    const entry = store.get(key)
+
+    if (!entry || now > entry.resetAt) {
+      store.set(key, { count: 1, resetAt: now + windowMs })
+      res.setHeader('X-RateLimit-Limit', String(maxRequests))
+      res.setHeader('X-RateLimit-Remaining', String(maxRequests - 1))
+      return next()
+    }
+
+    if (entry.count >= maxRequests) {
+      res.setHeader('X-RateLimit-Limit', String(maxRequests))
+      res.setHeader('X-RateLimit-Remaining', '0')
+      res.setHeader('Retry-After', String(Math.ceil((entry.resetAt - now) / 1000)))
+      res.status(429).json({ error: 'Too Many Requests' })
+      return
+    }
+
+    entry.count++
+    res.setHeader('X-RateLimit-Limit', String(maxRequests))
+    res.setHeader('X-RateLimit-Remaining', String(maxRequests - entry.count))
+    next()
+  }
+}
+
 export async function createWebApp(cwd: string = process.cwd()) {
   const app = express()
 
@@ -183,6 +222,14 @@ export async function createWebApp(cwd: string = process.cwd()) {
   app.post('/api/admin/auth/logout', (req: Request, res: Response) => {
     adminAuth.logout(req.header('x-admin-session') || undefined)
     res.json({ success: true })
+  })
+
+  // Rate limiting for admin endpoints: 30 req/min per admin token
+  const adminRateLimiter = createRateLimiter(60_000, 30)
+  app.use('/api/admin', (req: Request, res: Response, next: () => void) => {
+    // Skip rate limiting for auth endpoints (login, setup, logout)
+    if (req.path.includes('/auth/')) return next()
+    adminRateLimiter(req, res, next)
   })
 
   app.get('/api/admin/connectors', (req: Request, res: Response) => {
@@ -417,8 +464,11 @@ export async function createWebApp(cwd: string = process.cwd()) {
     res.json({ workspacePath: session.workspacePath })
   })
 
+  // Rate limiting for query endpoint: 60 req/min per session
+  const queryRateLimiter = createRateLimiter(60_000, 60)
+
   // Query (SSE streaming)
-  app.post('/api/sessions/:id/query', async (req: Request, res: Response) => {
+  app.post('/api/sessions/:id/query', queryRateLimiter, async (req: Request, res: Response) => {
     const { id } = req.params
     const { message } = req.body
 
