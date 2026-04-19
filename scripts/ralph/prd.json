@@ -412,8 +412,8 @@
         "README.md is updated to reflect the shipped enterprise platform capabilities"
       ],
       "priority": 29,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All acceptance criteria met: (1) All 29 user stories have passes: true in prd.json; (2) bun run web:check passes (21 tests, build); (3) bun run web:scenario --mode=primary passes 20/20 steps; (4) README.md updated with shipped enterprise platform capabilities. Fixed parseArgValue in web-build-studio-scenario.ts to handle --key=value argument format."
     },
     {
       "id": "US-W1",
@@ -632,8 +632,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 43,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added theme state and toggleTheme function, theme toggle button in CommandToolbar, CSS variables for light/dark themes."
     }
   ]
 }

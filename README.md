@@ -43,14 +43,41 @@ CLI 入口仍然保留，适合终端环境下直接使用：
 
 ## 当前已实现的企业能力
 
+### 核心企业功能
 - 管理员创建和登录
-- connector 持久化
-- module 持久化
-- module 发布确认门
+- connector 持久化和管理
+- module 持久化、刷新和发布确认门
 - session enterprise metadata 持久化
 - 已发布模块进入用户运行时
-- 报表规划 trace
+- 报表规划 trace 和 ReportInspector 面板
 - workspace 级文件读写保护
+- API rate limiting (per-session 和 admin 端点)
+- Admin 操作审计日志
+
+### Agent 与会话功能
+- Session rename (double-click 编辑)
+- AI typing indicator (bouncing dots)
+- Message retry on failure
+- Conversation export to Markdown
+- Keyboard shortcuts (Cmd+Enter submit, Cmd+Shift+L clear, Escape cancel)
+- Toast notification system (success/error/info, auto-dismiss)
+- Loading skeletons with shimmer animation
+- Empty state designs (sessions, modules, connectors, conversation)
+
+### 专业 UI/UX
+- Professional status badges (module lifecycle: draft/published/archived; connector: connected/disconnected/connecting)
+- Professional header branding with product name and admin mode indicator
+- Input area improvements (character count, clear button, placeholder hints)
+- Session list search, date filter, and sort
+- Message timestamps (relative) and consecutive message grouping
+- Dark mode theme support (toggle, localStorage persistence, system preference)
+
+### 质量保障
+- BUILD_STUDIO_20@v1 scenario (20 steps, shadow + primary mode)
+- GitHub Actions CI pipeline (test + build + scenario smoke test)
+- Playwright UI component tests (DataSourceManager, ModuleManager, surface switching)
+- TypeScript strict mode enabled
+- Vite production build with code splitting
 
 当前还不是完整 ERP/CRM 替代系统，也不是通用低代码平台。
 

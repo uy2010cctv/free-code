@@ -32,6 +32,12 @@ type MutableContext = {
 }
 
 function parseArgValue(name: string): string | undefined {
+  // Handle --key=value format (single argv element with =)
+  const kvIndex = process.argv.findIndex(arg => arg.startsWith(`${name}=`))
+  if (kvIndex !== -1) {
+    return process.argv[kvIndex].split('=')[1]
+  }
+  // Handle --key value format (separate argv elements)
   const index = process.argv.indexOf(name)
   if (index === -1) return undefined
   return process.argv[index + 1]
