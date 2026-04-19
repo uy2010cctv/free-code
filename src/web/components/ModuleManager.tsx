@@ -163,7 +163,7 @@ export function ModuleManager({
             </div>
             <div className="enterprise-sidecar">
               <span className="module-version">v{module.version}</span>
-              <span className={`status-badge status-${module.lifecycleState === 'published' ? 'connected' : 'disconnected'}`}>
+              <span className={`status-badge status-${module.lifecycleState}`}>
                 {module.lifecycleState}
               </span>
               {isAdmin && (
