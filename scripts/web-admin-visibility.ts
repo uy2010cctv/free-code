@@ -33,7 +33,7 @@ export async function runAdminStudioVisibilityCheck(input: VisibilityCheckInput)
   try {
     await waitForHealthy(baseUrl, 30_000)
     try {
-      return await withTimeout(runPlaywrightVisibilityCheck(baseUrl, input), 90_000, 'Playwright visibility check timed out')
+      return await withTimeout(runPlaywrightVisibilityCheck(baseUrl, input), 120_000, 'Playwright visibility check timed out')
     } catch (playwrightError) {
       const message = playwrightError instanceof Error ? playwrightError.message : String(playwrightError)
       if (!/Executable doesn't exist|browserType\.launch/i.test(message)) {
@@ -60,12 +60,13 @@ async function runPlaywrightVisibilityCheck(baseUrl: string, input: VisibilityCh
     stage = 'new-page'
     console.error(`[visibility] playwright stage=${stage}`)
     const context = await browser.newContext()
+    const page = await context.newPage()
     if (adminToken) {
-      await context.addInitScript((token: string) => {
+      // Set localStorage after page load to avoid SecurityError in null-origin init script
+      await page.addInitScript((token: string) => {
         window.localStorage.setItem('free-code-admin-token', token)
       }, adminToken)
     }
-    const page = await context.newPage()
     stage = 'goto'
     console.error(`[visibility] playwright stage=${stage}`)
     await page.goto(`${baseUrl}/?surface=admin&adminPanel=${input.panel || 'modules'}`, {

@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, ralph/enterprise-web-agent-platform]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Type check, test, and build
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run tests
+        run: bun test src/web/engine/__tests__
+
+      - name: Build
+        run: bun run web:build
+
+  scenario:
+    name: BUILD_STUDIO_20 smoke test
+    runs-on: macos-14
+    needs: check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run BUILD_STUDIO_20 scenario
+        run: bun run web:scenario --mode=shadow

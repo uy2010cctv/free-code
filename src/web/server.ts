@@ -563,7 +563,7 @@ async function startServer() {
 
   // Create Vite server in middleware mode
   const vite = await createViteServer({
-    server: { middlewareMode: true },
+    server: { middlewareMode: true, hmr: false },
     root: join(__dirname),
   })
 

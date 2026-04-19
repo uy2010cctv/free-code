@@ -218,3 +218,13 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - chunkSizeWarningLimit can be raised with a comment justification if the bundle cannot be further split
   - bun run web:check (web:test + web:build) is the green-light gate for this codebase
 ---
+
+## 2026年 4月19日 星期日 08时30分00秒 CST - US-N4
+- What was implemented: Fixed BUILD_STUDIO_20@v1 shadow mode failures. Root causes: (1) Playwright SecurityError with localStorage in headless mode - moved window.localStorage.setItem from context.addInitScript (null-origin, runs before page creation) to page.addInitScript (runs after page load); (2) Vite HMR causing DOM detachment in headless browser - added hmr: false to server.ts Vite config. All 20 steps now pass consistently.
+- Files changed: scripts/web-admin-visibility.ts (moved addInitScript to page-level), src/web/server.ts (added hmr: false to Vite config)
+- **Learnings for future iterations:**
+  - Playwright localStorage must be set AFTER page.goto, not in context.addInitScript, to avoid SecurityError in null-origin headless mode
+  - Vite HMR can cause DOM instability in headless browser testing - disable with hmr: false when running Playwright tests against the same server
+  - The BUILD_STUDIO_20@v1 scenario is the release gate - run with: bun run web:scenario --mode=shadow
+  - bun run web:check (web:test + web:build) is the green-light gate for this codebase
+---
