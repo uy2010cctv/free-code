@@ -292,3 +292,14 @@ Started: 2026年 4月18日 星期六 00时50分00秒 CST
   - PATCH endpoint validation: check typeof title === string and !title.trim() before calling sessionManager
   - Always use commit message format: feat: [Story ID] - [Story Title]
 ---
+---
+
+## 2026年 4月19日 星期日 03:00PM CST - US-W1 to US-W7
+- What was implemented: Completed first batch of UX stories. US-W1: Session rename via double-click with PATCH API. US-W2: Typing indicator with bouncing dots animation. US-W3: Message retry on failure with retry button. US-W4: Conversation export to Markdown. US-W5: Keyboard shortcuts (Cmd+Enter submit, Cmd+Shift+L clear, Escape cancel). US-W6: Toast notification system with auto-dismiss. US-W7: Loading skeletons with shimmer animation.
+- Files changed: Multiple component and style files across src/web/
+- **Learnings for future iterations:**
+  - useWebKeybindings hook needs onSubmit prop for Ctrl+Enter submit
+  - ToastContainer positioned fixed at bottom-right
+  - Skeleton shimmer uses linear-gradient with background-size animation
+  - Message.failed flag triggers retry button rendering
+---
