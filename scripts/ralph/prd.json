@@ -457,8 +457,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 32,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added failed field to Message type. MessageList shows retry button for failed messages (with red border and opacity). handleRetryMessage removes failed message and resubmits content via handleSubmitQuery. setMessages marks user's last message as failed on error."
     },
     {
       "id": "US-W4",

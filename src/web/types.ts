@@ -32,6 +32,7 @@ export interface Message {
   isMeta?: boolean
   isSynthetic?: boolean
   isCompactSummary?: boolean
+  failed?: boolean
 }
 
 export interface ToolResult {

@@ -320,6 +320,13 @@ export function AppWeb() {
     }
   }
 
+  async function handleRetryMessage(messageId: string, content: string) {
+    // Remove the failed message
+    setMessages(prev => prev.filter(m => m.id !== messageId))
+    // Resubmit the query
+    handleSubmitQuery(content)
+  }
+
   async function updateSessionConnectors(connectorIds: string[]) {
     if (!activeSessionId) return
     await adminFetch(`/api/sessions/${activeSessionId}/connectors`, {
@@ -627,10 +634,14 @@ export function AppWeb() {
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         setError(errorData.error || 'Request failed')
+        // Mark the user's last message as failed so retry button appears
+        setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.type === 'user' ? { ...m, failed: true } : m))
       }
     } catch (err: any) {
       console.error('Query failed:', err)
       setError(err.message || 'Request failed')
+      // Mark the user's last message as failed so retry button appears
+      setMessages(prev => prev.map((m, i) => i === prev.length - 1 && m.type === 'user' ? { ...m, failed: true } : m))
     } finally {
       setIsLoading(false)
     }
@@ -777,7 +788,7 @@ export function AppWeb() {
         )}
         {activeSurface === 'workspace' ? (
           <>
-            <MessageList messages={messages} isLoading={isLoading} />
+            <MessageList messages={messages} isLoading={isLoading} onRetry={handleRetryMessage} />
             <PromptInput
               value={inputValue}
               onChange={setInputValue}

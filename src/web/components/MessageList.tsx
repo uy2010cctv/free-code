@@ -7,9 +7,10 @@ import { ReportInspector } from './ReportInspector'
 interface MessageListProps {
   messages: Message[]
   isLoading: boolean
+  onRetry?: (messageId: string, content: string) => void
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+export function MessageList({ messages, isLoading, onRetry }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -172,12 +173,21 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
   return (
     <div ref={containerRef} className="message-list">
       {messages.map((msg) => (
-        <div key={msg.id} className={`message-row message-${msg.type}`}>
+        <div key={msg.id} className={`message-row message-${msg.type}${msg.failed ? ' message-failed' : ''}`}>
           <div className="message-header">
             <span className={`message-role ${getRoleClass(msg)}`}>
               {getRoleLabel(msg)}
             </span>
             <span className="message-timestamp">{formatTime(msg.timestamp)}</span>
+            {msg.failed && onRetry && (
+              <button
+                className="message-retry-btn"
+                onClick={() => onRetry(msg.id, msg.content)}
+                title="Retry this message"
+              >
+                Retry
+              </button>
+            )}
           </div>
           <div className="message-content">
             {renderMessage(msg)}

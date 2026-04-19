@@ -185,6 +185,30 @@ body {
   border-left-color: #ef4444;
 }
 
+.message-row.message-failed {
+  border-left: 3px solid #ef4444;
+}
+
+.message-failed .message-content {
+  opacity: 0.7;
+}
+
+.message-retry-btn {
+  margin-left: auto;
+  background: #ef4444;
+  border: none;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.2s;
+}
+
+.message-retry-btn:hover {
+  background: #dc2626;
+}
+
 .message-header {
   display: flex;
   align-items: center;
