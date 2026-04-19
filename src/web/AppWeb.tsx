@@ -37,6 +37,11 @@ export function AppWeb() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isMessageSelectorVisible, setIsMessageSelectorVisible] = useState(false)
   const [selectableMessages, setSelectableMessages] = useState<Message[]>([])
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark') return stored
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+  })
   const [isWorkspaceOpen, setIsWorkspaceOpen] = useState(false)
   const [workspaceFile, setWorkspaceFile] = useState<string | null>(null)
   const [workspaceContent, setWorkspaceContent] = useState('')
@@ -56,6 +61,19 @@ export function AppWeb() {
     setToasts(prev => [...prev, { id, type, message }])
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000)
   }
+
+  function toggleTheme() {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark'
+      localStorage.setItem('theme', next)
+      document.documentElement.setAttribute('data-theme', next)
+      return next
+    })
+  }
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [theme])
 
   function dismissToast(id: string) {
     setToasts(prev => prev.filter(t => t.id !== id))
@@ -809,8 +827,10 @@ export function AppWeb() {
           onExecuteCommand={handleExecuteCommand}
           onToggleWorkspace={handleToggleWorkspace}
           onExportConversation={handleExportConversation}
+          onToggleTheme={toggleTheme}
           isWorkspaceOpen={isWorkspaceOpen}
           isAdminMode={activeSurface === 'admin'}
+          isDarkMode={theme === 'dark'}
           activeSurface={activeSurface}
           onSelectSurface={setActiveSurface}
         />

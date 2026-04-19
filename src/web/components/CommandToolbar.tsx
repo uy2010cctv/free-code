@@ -7,8 +7,10 @@ interface CommandToolbarProps {
   onExecuteCommand: (command: string) => void
   onToggleWorkspace: () => void
   onExportConversation?: () => void
+  onToggleTheme?: () => void
   isWorkspaceOpen?: boolean
   isAdminMode?: boolean
+  isDarkMode?: boolean
   activeSurface: 'workspace' | 'admin'
   onSelectSurface: (surface: 'workspace' | 'admin') => void
 }
@@ -23,8 +25,10 @@ export function CommandToolbar({
   onExecuteCommand,
   onToggleWorkspace,
   onExportConversation,
+  onToggleTheme,
   isWorkspaceOpen,
   isAdminMode,
+  isDarkMode = true,
   activeSurface,
   onSelectSurface,
 }: CommandToolbarProps) {
@@ -95,6 +99,14 @@ export function CommandToolbar({
           <span className="toolbar-label">Export</span>
         </button>
       )}
+
+      <button
+        className="toolbar-btn"
+        onClick={onToggleTheme}
+        title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <span className="toolbar-icon">{isDarkMode ? '☀️' : '🌙'}</span>
+      </button>
 
       <button className="toolbar-btn" onClick={onOpenSettings} title={t('settings')}>
         <span className="toolbar-icon">⚙️</span>
